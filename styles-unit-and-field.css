@@ -1,0 +1,122 @@
+/* 管理unit-field的style */
+.unit-field {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);  /* 修改为8列 */
+    grid-template-rows: repeat(2, 1fr);  /* 修改为2行 */
+    gap: 10px;
+    width: 800px;  /* 根据列数调整宽度 */
+    height: 200px;  /* 根据行数调整高度 */
+    position: absolute;  /* 添加这一行 */
+    bottom: 40px;  /* 添加这一行 */
+    left: 0;  /* 添加这一行 */
+    right: 120px;  /* 添加这一行 */
+    margin: auto;  /* 添加这一行 */
+}
+
+.unit-store {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    position: absolute;  /* 添加这一行 */
+    top: 50px;  /* 添加这一行 */
+    left: 0;  /* 添加这一行 */
+}
+
+#unit-field-show {
+    align-self: flex-end;
+    margin-top: 20px;
+    margin-right: 100px;
+}
+
+/* #unit-field-player {
+    margin-bottom: 200px;
+    margin-left: 50px;
+} */
+
+.unit-cell {
+    width: 100px;
+    height: 100px;
+    background-color: #ccc;
+    border: 1px solid #000;
+}
+
+.unit-cell-filled {
+    background-color: #575757;  /* 修改这一行为你想要的颜色 */
+}
+
+
+/* 管理unit的style */
+.unit {
+    width: 85px;
+    height: 85px;
+    position: relative;
+    background-color: #f0f0f0;
+}
+
+.unit:hover {
+    filter: saturate(65%);  /* 修改这一行为你想要的饱和度 */
+    background-color: #d4d4d4;
+}
+
+.unit-shape {
+    width: 60px;  /* 修改为20px */
+    height: 60px;  /* 修改为20px */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: visible;
+    pointer-events: none;
+}
+
+.unit-shape.triangle {
+    width: 0;
+    height: 0;
+    border-left: 24px solid transparent;
+    border-right: 24px solid transparent;
+    border-bottom: 45px solid red;
+}
+
+.unit-shape.square {
+    background-color: blue;
+}
+
+.unit-shape.circle {
+    border-radius: 50%;
+    background-color: green;
+}
+
+.unit-attack, .unit-health, .unit-cost {
+    position: absolute;
+    user-select: none;  /* 添加这一行 */
+}
+
+.unit-attack {
+    left: 0;
+    bottom: 0;
+}
+
+.unit-health {
+    right: 0;
+    bottom: 0;
+}
+
+.unit-cost {
+    top: 0;
+    left: 0;
+    color: #000000;
+    background-color: rgb(255, 227, 18);
+    padding: 2px;
+    font-size: 12px;
+}
+
+#gold-amount {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    font-size: 24px; /* 增大字体大小 */
+    color: #FFD700; /* 金色字体 */
+    text-shadow: 2px 2px 4px #000000; /* 添加文字阴影 */
+    user-select: none;
+}
