@@ -34,9 +34,16 @@ class UnitCell {
                 this.element.classList.remove('unit-cell-filled');  // 移除类
             }
             // 来到了一个空格子，建立关系(前提是合法位置，需要对unit的攻击范围进行判断)
-            else if (unitsInside.length === 1 && this.unit === null) {                
-                // 如果unitcell的class中有unit-cell-move，那么就可以放置unit
-                if (this.element.classList.contains('unit-cell-move')){
+            else if (unitsInside.length === 1 && this.unit === null) { 
+                // 如果是战斗场景，则会根据渲染范围来判断是否可以放置unit   
+                if (Scene.instances[0] instanceof SceneBattle){
+                    if (this.element.classList.contains('unit-cell-move')){
+                        this.setUnit(unitsInside[0]);
+                        console.log('unit placed');
+                    }
+                }
+                // 如果不是战斗场景，则直接放置unit
+                else{
                     this.setUnit(unitsInside[0]);
                     console.log('unit placed');
                 }
@@ -44,17 +51,21 @@ class UnitCell {
             }
             // 来到了一个有unit的格子
             else {
-                if (this.element.classList.contains('unit-cell-attack')){
-                    // 寻找unitsinside中不是this.unit的unit
-                    let newUnit = unitsInside.find(unit => unit !== this.unit);
-                    if (newUnit && this.unit){
-                        // 原有单位被摧毁
-                        this.unit.destroy();
-                        // 新单位放置
-                        this.setUnit(newUnit);
-                        console.log('unit destroyed and placed');
+                // 如果是战斗场景则检查攻击逻辑
+                if (Scene.instances[0] instanceof SceneBattle){
+                    if (this.element.classList.contains('unit-cell-attack')){
+                        // 寻找unitsinside中不是this.unit的unit
+                        let newUnit = unitsInside.find(unit => unit !== this.unit);
+                        if (newUnit && this.unit){
+                            // 原有单位被摧毁
+                            this.unit.destroy();
+                            // 新单位放置
+                            this.setUnit(newUnit);
+                            console.log('unit destroyed and placed');
+                        }
                     }
                 }
+                // 非战斗场景直接当成非法移动处理
             }
         });
     }
@@ -125,6 +136,20 @@ UnitCell.instances = [];  // 定义并初始化静态属性
 class UnitContainer {
     constructor(matrix) {
         this.matrix = matrix;
+    }
+    
+    // 返回所有unit
+    getUnits() {
+        let units = [];
+        for (let y = 0; y < this.matrix.length; y++) {
+            for (let x = 0; x < this.matrix[y].length; x++) {
+                const cell = this.getCell(x, y);
+                if (cell.getUnit()) {
+                    units.push(cell.getUnit());
+                }
+            }
+        }
+        return units;
     }
 
     getCell(x, y) {
@@ -239,7 +264,7 @@ class UnitStore extends UnitContainer {
             let unit = new Unit(Math.floor(Math.random() * 3) + 1);  // 创建一个新的 Unit
             unit.render();
             document.getElementsByClassName('unit-store')[0].appendChild(unit.element);  // 渲染这个 Unit
-            this.matrix[0][i].attachUnit(unit);
+            this.matrix[0][i].setUnit(unit);
         }
     }
 

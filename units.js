@@ -27,6 +27,7 @@ class Unit {
     destroy() {
         if (this.parentCell) {
             this.parentCell.setUnit(null);
+            this.parentCell.element.classList.remove('unit-cell-filled');
         }
         this.element.remove();
         const index = Unit.instances.indexOf(this);
@@ -79,14 +80,14 @@ class Unit {
             startX = e.clientX - offsetX;
             startY = e.clientY - offsetY;
 
-            // 渲染攻击范围
-            if (this.parentCell) {
+            // 只在currentScene 是 currentScene SceneBattle的时候才渲染攻击范围
+            if (this.parentCell && Scene.instances[0] instanceof SceneBattle) {
                 cells = this.parentCell.parentField.getsurroundingCells(this.parentCell.x, this.parentCell.y);
                 cells.forEach(cell => {
                     // 随机赋予以下几个class中的一个或者两个，[unit-cell-attack, unit-cell-move]
                     let random_class_list = ['unit-cell-attack', 'unit-cell-move'];
                     let random_class = random_class_list[Math.floor(Math.random() * random_class_list.length)];
-                    cell.element.classList.add(random_class);  
+                    cell.element.classList.add(random_class);
                     random_class = random_class_list[Math.floor(Math.random() * random_class_list.length)];
                     cell.element.classList.add(random_class);  
                 });
@@ -104,11 +105,12 @@ class Unit {
         // 非法位置回溯 + 攻击范围渲染的取消
         document.addEventListener('mouseup', () => {
             mouseDown = false;
-            // 回溯unit的位置
+            // 非法位置回溯
             if (this.parentCell){
-                this.parentCell.attachUnit(this);
+                this.parentCell.setUnit(this);
             }
-
+            
+            // 取消攻击范围渲染
             if (cells) {
                 cells.forEach(cell => {
                     cell.element.classList.remove('unit-cell-attack');

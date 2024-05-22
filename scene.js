@@ -25,13 +25,13 @@ class ScenePrepare extends Scene {
     constructor() {
         super();
         // 添加你需要的元素
-        const unitFieldPlayer = new UnitField();
-        const unitStore = new UnitStore();
+        this.unitFieldPlayer = new UnitField();
+        this.unitStore = new UnitStore();
         const player = new Player();
 
 
-        this.addElement(unitFieldPlayer.render());
-        this.addElement(unitStore.render());
+        this.addElement(this.unitFieldPlayer.render());
+        this.addElement(this.unitStore.render());
         this.addElement(player.updateGold(10));
     }
 }
@@ -54,3 +54,5 @@ class SceneBattle extends Scene {
         return this.battlefield;
     }
 }
+
+Scene.instances = [];

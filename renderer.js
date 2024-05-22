@@ -17,16 +17,49 @@ window.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('spawnRandomUnit').addEventListener('click', spawnRandomUnit);
 
     let currentScene = new SceneBattle();
+    Scene.instances.push(currentScene);
     currentScene.render();
 
     function switchScene() {
+        Scene.instances = [];
         currentScene.clear();
         if (currentScene instanceof ScenePrepare) {
+            // 如果是准备阶段，切换到战斗阶段，同时会将准备场景中的UnitField类中的所有unit移动到战斗场景中
+
+            // 获取 ScenePrepare 中的 UnitField 的所有单元格
+            const matrix = currentScene.unitFieldPlayer.matrix;
+
             currentScene = new SceneBattle();
+            currentScene.render();
+
+            // 遍历matrix中的每一个单元格，如果是null则跳过，否则在对应的位置生成一个新的Unit
+            for (let y = 0; y < matrix.length; y++) {
+                for (let x = 0; x < matrix[y].length; x++) {
+                    const unit = matrix[y][x].getUnit();
+                    if (unit) {
+                        spawnIDUnitAtPos(x, 6 + y, unit.id);
+                    }
+                }
+            }
+
         } else {
             currentScene = new ScenePrepare();
+            currentScene.render();
+            currentScene.unitStore.randomizeUnits();
         }
-        currentScene.render();
+        Scene.instances.push(currentScene);
+    }
+
+    function spawnIDUnitAtPos(x, y, unit_id) {
+        const unit = new Unit(unit_id);  // 创建一个新的 Unit
+        // 如果是战场才会生成
+        if (currentScene instanceof SceneBattle) {
+            const battlefield = currentScene.getBattleField();
+
+            battlefield.element.appendChild(unit.render());  // 渲染这个 Unit
+            const targetCell = battlefield.getCell(x, y);
+            targetCell.setUnit(unit);
+        }
     }
 
     function spawnRandomUnit() {
