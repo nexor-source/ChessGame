@@ -81,6 +81,12 @@
 .unit-cell-attack {
     background-color: red !important;
 }
+.unit-cell-move {
+    background-color: blue !important;
+}
+.unit-cell-attack.unit-cell-move {
+    background-color: purple !important;
+}
 
 /* 管理unit的style */
 .unit {

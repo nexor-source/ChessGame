@@ -31,7 +31,18 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
     function spawnRandomUnit() {
         const unit = new Unit(1);  // 创建一个新的 Unit
-        document.body.appendChild(unit.render());  // 渲染这个 Unit
+
+        // 如果是战场才会生成
+        if (currentScene instanceof SceneBattle) {
+            const battlefield = currentScene.getBattleField();
+
+            battlefield.element.appendChild(unit.render());  // 渲染这个 Unit
+            const emptyCells = battlefield.getEmptyCells();
+            const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            randomCell.setUnit(unit);
+        }
+        
+        // document.body.dispatchEvent(clickEvent); 
     }
 
     // const numberOfUnits = 3;  // 你想要的 Unit 数量
@@ -45,4 +56,12 @@ window.addEventListener('DOMContentLoaded', (event) => {
     // setTimeout(() => {
     //     player.updateGold(20);
     // }, 5000);
+
+    // 在body上触发点击事件
+    let clickEvent = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: false,
+        view: window
+    });
+    
 });

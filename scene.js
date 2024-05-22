@@ -29,6 +29,7 @@ class ScenePrepare extends Scene {
         const unitStore = new UnitStore();
         const player = new Player();
 
+
         this.addElement(unitFieldPlayer.render());
         this.addElement(unitStore.render());
         this.addElement(player.updateGold(10));
@@ -42,9 +43,14 @@ class SceneBattle extends Scene {
         let text = document.createElement('p');
         text.textContent = '这是战斗阶段';
 
-        const battlefield = new UnitBattleField();
+        this.battlefield = new UnitBattleField();
 
-        this.addElement(battlefield.render());
+        this.addElement(this.battlefield.render());
         this.addElement(text);
+    }
+
+    // 提供一个方法来获取 UnitBattleField
+    getBattleField() {
+        return this.battlefield;
     }
 }

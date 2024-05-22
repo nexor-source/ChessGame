@@ -23,6 +23,18 @@ class Unit {
         Unit.instances.push(this);
     }
 
+    // 添加一个方法用于摧毁unit
+    destroy() {
+        if (this.parentCell) {
+            this.parentCell.setUnit(null);
+        }
+        this.element.remove();
+        const index = Unit.instances.indexOf(this);
+        if (index > -1) {
+            Unit.instances.splice(index, 1);
+        }
+    }
+
     render() {
         this.element = document.createElement('div');
         this.element.className = 'unit';
@@ -68,10 +80,17 @@ class Unit {
             startY = e.clientY - offsetY;
 
             // 渲染攻击范围
-            cells = this.parentCell.parentField.getsurroundingCells(this.parentCell.x, this.parentCell.y);
-            cells.forEach(cell => {
-                cell.element.classList.add('unit-cell-attack');  // 改变颜色
-            });
+            if (this.parentCell) {
+                cells = this.parentCell.parentField.getsurroundingCells(this.parentCell.x, this.parentCell.y);
+                cells.forEach(cell => {
+                    // 随机赋予以下几个class中的一个或者两个，[unit-cell-attack, unit-cell-move]
+                    let random_class_list = ['unit-cell-attack', 'unit-cell-move'];
+                    let random_class = random_class_list[Math.floor(Math.random() * random_class_list.length)];
+                    cell.element.classList.add(random_class);  
+                    random_class = random_class_list[Math.floor(Math.random() * random_class_list.length)];
+                    cell.element.classList.add(random_class);  
+                });
+            }
         });
     
         // 拖动时的位置变换
@@ -93,6 +112,7 @@ class Unit {
             if (cells) {
                 cells.forEach(cell => {
                     cell.element.classList.remove('unit-cell-attack');
+                    cell.element.classList.remove('unit-cell-move');
                 });
             }
         });
