@@ -13,6 +13,21 @@
     margin: auto;  /* 添加这一行 */
 }
 
+.unit-battlefield{
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 10px;
+    width: 800px;
+    height: 800px;  /* 修改为800px以使其成为正方形 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto;
+}
+
 .unit-store {
     display: flex;
     flex-direction: row;
@@ -34,6 +49,8 @@
     margin-left: 50px;
 } */
 
+/* unit-cell  unit-cell-filled  black-cell  white-cell  move-cell  attack-cell  range-attack-cell*/
+
 .unit-cell {
     width: 100px;
     height: 100px;
@@ -41,10 +58,29 @@
     border: 1px solid #000;
 }
 
-.unit-cell-filled {
+.unit-cell.unit-cell-filled {
     background-color: #575757;  /* 修改这一行为你想要的颜色 */
 }
 
+.unit-cell.white-cell.unit-cell-filled {
+    background-color: #e3e3e3;  /* 修改这一行为你想要的颜色 */
+}
+
+.unit-cell.black-cell.unit-cell-filled {
+    background-color: #2a2a2a;  /* 修改这一行为你想要的颜色 */
+}
+
+.unit-cell.white-cell {
+    background-color: white;
+}
+
+.unit-cell.black-cell {
+    background-color: black;
+}
+
+.unit-cell-attack {
+    background-color: red !important;
+}
 
 /* 管理unit的style */
 .unit {
@@ -70,7 +106,7 @@
     pointer-events: none;
 }
 
-.unit-shape.triangle {
+/* .unit-shape.triangle {
     width: 0;
     height: 0;
     border-left: 24px solid transparent;
@@ -85,7 +121,7 @@
 .unit-shape.circle {
     border-radius: 50%;
     background-color: green;
-}
+} */
 
 .unit-attack, .unit-health, .unit-cost {
     position: absolute;

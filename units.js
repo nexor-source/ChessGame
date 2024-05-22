@@ -20,7 +20,6 @@ class Unit {
         this.draggable = true;
         this.parentCell = null;
         this.element = null;
-
         Unit.instances.push(this);
     }
 
@@ -60,23 +59,41 @@ class Unit {
         let mouseDown = false;
         let startX, startY, offsetX = 0, offsetY = 0;
     
+        // 渲染unit可以攻击到的范围的cell
+        let cells = null;
+
         element.addEventListener('mousedown', (e) => {
             mouseDown = true;
             startX = e.clientX - offsetX;
             startY = e.clientY - offsetY;
+
+            // 渲染攻击范围
+            cells = this.parentCell.parentField.getsurroundingCells(this.parentCell.x, this.parentCell.y);
+            cells.forEach(cell => {
+                cell.element.classList.add('unit-cell-attack');  // 改变颜色
+            });
         });
     
+        // 拖动时的位置变换
         document.addEventListener('mousemove', (e) => {
             if (!mouseDown) return;
             offsetX = e.clientX - startX;
             offsetY = e.clientY - startY;
             element.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
         });
-    
+        
+        // 非法位置回溯 + 攻击范围渲染的取消
         document.addEventListener('mouseup', () => {
             mouseDown = false;
+            // 回溯unit的位置
             if (this.parentCell){
                 this.parentCell.attachUnit(this);
+            }
+
+            if (cells) {
+                cells.forEach(cell => {
+                    cell.element.classList.remove('unit-cell-attack');
+                });
             }
         });
     }

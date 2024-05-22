@@ -14,9 +14,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
     // unitStore.randomizeUnits();
 
     document.getElementById('sceneSwitchButton').addEventListener('click', switchScene);
+    document.getElementById('spawnRandomUnit').addEventListener('click', spawnRandomUnit);
 
-
-    let currentScene = new ScenePrepare();
+    let currentScene = new SceneBattle();
     currentScene.render();
 
     function switchScene() {
@@ -29,6 +29,11 @@ window.addEventListener('DOMContentLoaded', (event) => {
         currentScene.render();
     }
 
+    function spawnRandomUnit() {
+        const unit = new Unit(1);  // 创建一个新的 Unit
+        document.body.appendChild(unit.render());  // 渲染这个 Unit
+    }
+
     // const numberOfUnits = 3;  // 你想要的 Unit 数量
 
     // for (let i = 0; i < numberOfUnits; i++) {
@@ -36,8 +41,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
     //     document.body.appendChild(unit.render());  // 渲染这个 Unit
     // }
 
-    // 在5秒后执行 unitStore.randomizeUnits()
-    setTimeout(() => {
-        player.updateGold(20);
-    }, 5000);
+    // // 在5秒后执行 unitStore.randomizeUnits()
+    // setTimeout(() => {
+    //     player.updateGold(20);
+    // }, 5000);
 });

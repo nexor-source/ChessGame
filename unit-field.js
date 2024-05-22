@@ -1,28 +1,19 @@
 
 
 class UnitCell {  
-    constructor() {
+    constructor(x = 0, y = 0, parentField = null) {
         this.unit = null;
         this.element = null;
+        this.x = x;
+        this.y = y;
+        this.parentField = parentField;
         UnitCell.instances.push(this);
+
+        this.element = document.createElement('div');
+        this.element.className = 'unit-cell';
+
         document.addEventListener('mouseup', (event) => {
         
-            // // 获取 UnitCell 元素的位置和尺寸
-            // const left = this.element.offsetLeft;
-            // const top = this.element.offsetTop;
-            // const width = this.element.offsetWidth;
-            // const height = this.element.offsetHeight;
-        
-            // // 检查鼠标指针是否在 UnitCell 内部
-            // if (event.clientX < left || event.clientX > left + width || event.clientY < top || event.clientY > top + height) {
-            //     return;
-            // }
-        
-            // 计算 UnitCell 的中心点
-            
-            
-
-            // let units = document.getElementsByClassName('unit');
             let units = Unit.instances;
 
             let unitsInside = []; // 存储在 UnitCell 内部的 unit
@@ -108,9 +99,6 @@ class UnitCell {
     }
 
     render() {
-        this.element = document.createElement('div');
-        this.element.className = 'unit-cell';
-
         if (this.unit) {
             this.element.appendChild(this.unit.render());
         }
@@ -154,6 +142,52 @@ class UnitField extends UnitContainer {
             }
         }
         return this.element;
+    }
+}
+
+class UnitBattleField extends UnitContainer {
+    constructor() {
+        super();
+        this.matrix = [];
+        for (let i = 0; i < 8; i++) {
+            let row = [];
+            for (let j = 0; j < 8; j++) {
+                row.push(new UnitCell(j, i, this));
+            }
+            this.matrix.push(row);
+        }
+    }
+
+    render(id = '') {
+        this.element = document.createElement('div');
+        this.element.className = 'unit-battlefield';
+        this.element.id = id;
+        for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+                const cell = this.getCell(x, y);
+                if ((x+y)%2===0){
+                    cell.element.classList.add('white-cell');
+                }else {
+                    cell.element.classList.add('black-cell');
+                }
+                this.element.appendChild(cell.render());
+            }
+        }
+        return this.element;
+    }
+
+    getsurroundingCells(x, y) {
+        let surroundingCells = [];
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                let newX = x + i;
+                let newY = y + j;
+                if (newX >= 0 && newX < 8 && newY >= 0 && newY < 8) {
+                    surroundingCells.push(this.getCell(newX, newY));
+                }
+            }
+        }
+        return surroundingCells;
     }
 }
 

@@ -41,6 +41,10 @@ class SceneBattle extends Scene {
         // 添加一个用于测试的文字
         let text = document.createElement('p');
         text.textContent = '这是战斗阶段';
+
+        const battlefield = new UnitBattleField();
+
+        this.addElement(battlefield.render());
         this.addElement(text);
     }
 }
