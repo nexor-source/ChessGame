@@ -1,9 +1,18 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 
+let deckData = null;
+ipcMain.on('send-deck-data', (event, data) => {
+  deckData = data;
+});
+
 ipcMain.on('switch-scene', (event, newScene) => {
   const currentWindow = BrowserWindow.getFocusedWindow();
   if (currentWindow) {
     currentWindow.loadFile(newScene);
+    currentWindow.webContents.on('did-finish-load', () => {
+      currentWindow.webContents.send('receive-deck-data', deckData);
+      deckData = null;
+    });
   }
 });
 

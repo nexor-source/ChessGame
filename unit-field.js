@@ -1,7 +1,6 @@
 class UnitCell {  
     constructor(x = 0, y = 0, parentField = null) {
         this.unit = null;
-        this.element = null;
         this.x = x;
         this.y = y;
         this.parentField = parentField;
@@ -33,7 +32,6 @@ class UnitCell {
         Unit.instances.forEach(unit => {
             unit.attachToCell();
         });
-
     }
 
     // unit吸附到unit-cell上
@@ -83,10 +81,10 @@ class UnitCell {
         this.unit = unit;
 
         // 更新单位数量
-        if (unit === null) {
-            this.unitCountElement.textContent = '0';
-        } else {
+        if (unit) {
             this.unitCountElement.textContent = unit.id;
+        } else {
+            this.unitCountElement.textContent = '0';
         }
         
         if (unit){
@@ -99,6 +97,22 @@ class UnitCell {
         } else {
             this.element.classList.remove('unit-cell-filled');  // 移除类
         }
+    }
+
+    // 与另一个格子交换unit
+    swapUnit(cell) {
+        // 更新单位数量
+        this.unitCountElement.textContent = cell.unit.id;
+        cell.unitCountElement.textContent = this.unit.id;
+        this.attachUnit(cell.unit);
+        cell.attachUnit(this.unit);
+        // 更新父母
+        this.unit.parentCell = cell;
+        cell.unit.parentCell = this;
+        // 更新cell的unit
+        const temp = this.unit;
+        this.unit = cell.unit;
+        cell.unit = temp;
     }
 
     render() {
@@ -131,6 +145,10 @@ class UnitContainer {
     }
 
     getCell(x, y) {
+        // 判断是否越界
+        if (x < 0 || x >= this.matrix[0].length || y < 0 || y >= this.matrix.length) {
+            return null;
+        }
         return this.matrix[y][x];
     }
 
@@ -153,10 +171,29 @@ class UnitContainer {
 
 class UnitField extends UnitContainer {
     constructor() {
-        super([
-            [new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell()],
-            [new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell()]
-        ]);
+        super();
+        this.matrix = [];
+        for (let i = 0; i < 2; i++) {
+            let row = [];
+            for (let j = 0; j < 8; j++) {
+                row.push(new UnitCell(i, 0, this));
+            }
+            this.matrix.push(row);
+        }
+    }
+
+    // 计算所有unit的cost的和，并更新到页面上
+    UpdateCost() {
+        let cost = 0;
+        for (let y = 0; y < 2; y++) {
+            for (let x = 0; x < 8; x++) {
+                const cell = this.getCell(x, y);
+                if (cell.getUnit()) {
+                    cost += cell.getUnit().cost;
+                }
+            }
+        }
+        Player.instances[0].updateGold(cost);
     }
     
     render(id = '') {        
@@ -235,33 +272,45 @@ class UnitBattleField extends UnitContainer {
 
 class UnitStore extends UnitContainer {
     constructor() {
-        super([
-            [new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell(), new UnitCell()]
-        ]);
-        this.unitNums = 6;
+        super();
+        this.matrix = [];
+        this.rowNum = 4;
+        this.colNum = 10;
+        for (let i = 0; i < this.rowNum; i++) {
+            let row = [];
+            for (let j = 0; j < this.colNum; j++) {
+                row.push(new UnitCell(0, 0, this));
+            }
+            this.matrix.push(row);
+        }
         this.element = document.createElement('div');
         this.element.className = 'unit-store';
         this.element.id = '';
     }
     
     randomizeUnits() {
-        // for (let x = 0; x < this.unitNums; x++) {
-        //     const cell = this.getCell(x, 0);
-        //     cell.setUnit(new Unit(Math.floor(Math.random() * 3) + 1));
-        // }
-        for (let i = 0; i < 5; i++) {
-            let unit = new Unit(Math.floor(Math.random() * 3) + 1);  // 创建一个新的 Unit
-            unit.render();
-            document.getElementsByClassName('unit-store')[0].appendChild(unit.element);  // 渲染这个 Unit
-            this.matrix[0][i].setUnit(unit);
+        for (let i = 0; i < this.rowNum; i++) {
+            for (let j = 0; j < this.colNum; j++) {
+                let unit = new Unit(Math.floor(Math.random() * 6) + 1);  // 创建一个新的 Unit
+                unit.render();
+                this.matrix[i][j].element.appendChild(unit.element);  // 渲染这个 Unit
+                this.matrix[i][j].setUnit(unit);
+                // 不是我明明在setUnit里面已经attachUnit过了我为什么还要在这里重新attach一次？
+                this.matrix[i][j].attachUnit(unit);
+            }
         }
     }
 
-    render() {        
-        for (let x = 0; x < this.unitNums; x++) {
-            const cell = this.getCell(x, 0);
-            this.element.appendChild(cell.render());
-        }
+    render() {    
+        for (let y = 0; y < this.matrix.length; y++) {
+            for (let x = 0; x < this.matrix[0].length; x++) {
+                const cell = this.getCell(x, y);
+                this.element.appendChild(cell.render());
+            }
+        }    
         return this.element;
     }
 }
+
+// // 记录玩家选择的单位
+// UnitStore.playerdeck = [];  // 定义并初始化静态属性

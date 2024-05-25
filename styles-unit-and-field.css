@@ -11,6 +11,7 @@
     left: 0;  /* 添加这一行 */
     right: 120px;  /* 添加这一行 */
     margin: auto;  /* 添加这一行 */
+    user-select: none;
 }
 
 .unit-battlefield {
@@ -26,16 +27,20 @@
     bottom: 0;
     right: 0;
     margin: auto;
+    user-select: none;
 }
 
 .unit-store {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(4, 1fr);
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
     position: absolute;  /* 添加这一行 */
     top: 50px;  /* 添加这一行 */
-    left: 0;  /* 添加这一行 */
+    left: 100px;  /* 添加这一行 */
+    user-select: none;
 }
 
 #unit-field-show {
@@ -56,6 +61,7 @@
     height: 100px;
     background-color: #ccc;
     border: 1px solid #000;
+    user-select: none;
 }
 
 .unit-cell.unit-cell-filled {
@@ -92,13 +98,17 @@
 .unit {
     width: 85px;
     height: 85px;
-    position: relative;
-    background-color: #f0f0f0;
+    position: absolute;
+    background-color: lightblue;
+}
+
+.unit.unit-enemy {
+    background-color: lightcoral;
 }
 
 .unit:hover {
     filter: saturate(65%);  /* 修改这一行为你想要的饱和度 */
-    background-color: #d4d4d4;
+    /* background-color: #d4d4d4; */
 }
 
 .unit-shape {
@@ -111,6 +121,11 @@
     overflow: visible;
     pointer-events: none;
     user-select: none;
+    border: 2px dashed black;
+}
+
+.unit-shape.unit-heavy {
+    border: 2px solid black;
 }
 
 /* .unit-shape.triangle {
@@ -156,8 +171,8 @@
 
 #gold-amount {
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: 10px;
+    bottom: 10px;
     font-size: 24px; /* 增大字体大小 */
     color: #FFD700; /* 金色字体 */
     text-shadow: 2px 2px 4px #000000; /* 添加文字阴影 */

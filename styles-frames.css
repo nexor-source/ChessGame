@@ -6,4 +6,5 @@ body {
     justify-content: space-between;
     align-items: flex-start;
     flex-direction: column;
+    padding: 0;  /* 移除默认的 padding */
 }
