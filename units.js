@@ -23,11 +23,19 @@ class Unit {
         Unit.instances.push(this);
     }
 
+    // 位置回溯
+    revertPosition() {
+        if (this.parentCell) {
+            this.parentCell.attachUnit(this);
+        }
+    }
+
     // 添加一个方法用于摧毁unit
     destroy() {
         if (this.parentCell) {
-            this.parentCell.setUnit(null);
             this.parentCell.element.classList.remove('unit-cell-filled');
+            this.parentCell.setUnit(null);
+            console.log('destroyed unit', this.id);
         }
         this.element.remove();
         const index = Unit.instances.indexOf(this);
@@ -55,69 +63,15 @@ class Unit {
         const costElement = document.createElement('div');
         costElement.textContent = this.cost;
         costElement.className = 'unit-cost';
-        
+
         this.element.appendChild(costElement);
         this.element.appendChild(shapeElement);
         this.element.appendChild(attackElement);
         this.element.appendChild(healthElement);
 
-        this.makeDraggable(this.element);
+        // this.makeDraggable(this.element);
 
         return this.element;
-    }
-
-    makeDraggable(element) {
-        if (!this.draggable) return;  // 如果不可拖动，直接返回
-    
-        let mouseDown = false;
-        let startX, startY, offsetX = 0, offsetY = 0;
-    
-        // 渲染unit可以攻击到的范围的cell
-        let cells = null;
-
-        element.addEventListener('mousedown', (e) => {
-            mouseDown = true;
-            startX = e.clientX - offsetX;
-            startY = e.clientY - offsetY;
-
-            // 只在currentScene 是 currentScene SceneBattle的时候才渲染攻击范围
-            if (this.parentCell && Scene.instances[0] instanceof SceneBattle) {
-                cells = this.parentCell.parentField.getsurroundingCells(this.parentCell.x, this.parentCell.y);
-                cells.forEach(cell => {
-                    // 随机赋予以下几个class中的一个或者两个，[unit-cell-attack, unit-cell-move]
-                    let random_class_list = ['unit-cell-attack', 'unit-cell-move'];
-                    let random_class = random_class_list[Math.floor(Math.random() * random_class_list.length)];
-                    cell.element.classList.add(random_class);
-                    random_class = random_class_list[Math.floor(Math.random() * random_class_list.length)];
-                    cell.element.classList.add(random_class);  
-                });
-            }
-        });
-    
-        // 拖动时的位置变换
-        document.addEventListener('mousemove', (e) => {
-            if (!mouseDown) return;
-            offsetX = e.clientX - startX;
-            offsetY = e.clientY - startY;
-            element.style.transform = `translate3d(${offsetX}px, ${offsetY}px, 0)`;
-        });
-        
-        // 非法位置回溯 + 攻击范围渲染的取消
-        document.addEventListener('mouseup', () => {
-            mouseDown = false;
-            // 非法位置回溯
-            if (this.parentCell){
-                this.parentCell.setUnit(this);
-            }
-            
-            // 取消攻击范围渲染
-            if (cells) {
-                cells.forEach(cell => {
-                    cell.element.classList.remove('unit-cell-attack');
-                    cell.element.classList.remove('unit-cell-move');
-                });
-            }
-        });
     }
 }
 

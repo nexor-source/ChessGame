@@ -13,7 +13,7 @@
     margin: auto;  /* 添加这一行 */
 }
 
-.unit-battlefield{
+.unit-battlefield {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
@@ -110,6 +110,7 @@
     transform: translate(-50%, -50%);
     overflow: visible;
     pointer-events: none;
+    user-select: none;
 }
 
 /* .unit-shape.triangle {

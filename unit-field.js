@@ -1,5 +1,3 @@
-
-
 class UnitCell {  
     constructor(x = 0, y = 0, parentField = null) {
         this.unit = null;
@@ -12,62 +10,30 @@ class UnitCell {
         this.element = document.createElement('div');
         this.element.className = 'unit-cell';
 
-        document.addEventListener('mouseup', (event) => {
-        
-            // 检查是否有 unit 在 UnitCell 内部
-            let units = Unit.instances;
-            let unitsInside = [];
-            for (let i = 0; i < units.length; i++) {
-                let unit = units[i];
-                // 检查 unit 的中心点是否在 UnitCell 内部
-                if (this._isInside(unit.element, this.element)){
-                    // 将 unit 添加到数组中
-                    unitsInside.push(unit);
-                }
-            }
+        // 创建一个新的元素来显示单位数量
+        this.unitCountElement = document.createElement('div');
+        this.unitCountElement.className = 'unit-count';
+        this.unitCountElement.textContent = '0'; // 默认为0
+        // 让用户无法选中
+        this.unitCountElement.style.userSelect = 'none';
+        this.element.appendChild(this.unitCountElement);
+    }
 
-            // 根据 unit 的数量，决定是否与 unit 解除关系 / 建立关系 / 不做任何操作
-            // 格子里没有单位，单方面解除关系
-            if (unitsInside.length === 0 && this.unit) {
-                this.setUnit(null);
-                console.log('unit removed');
-                this.element.classList.remove('unit-cell-filled');  // 移除类
-            }
-            // 来到了一个空格子，建立关系(前提是合法位置，需要对unit的攻击范围进行判断)
-            else if (unitsInside.length === 1 && this.unit === null) { 
-                // 如果是战斗场景，则会根据渲染范围来判断是否可以放置unit   
-                if (Scene.instances[0] instanceof SceneBattle){
-                    if (this.element.classList.contains('unit-cell-move')){
-                        this.setUnit(unitsInside[0]);
-                        console.log('unit placed');
-                    }
-                }
-                // 如果不是战斗场景，则直接放置unit
-                else{
-                    this.setUnit(unitsInside[0]);
-                    console.log('unit placed');
-                }
-                // 如果是非法位置，则不做任何操作，unit会在自己的mouseup事件中回溯位置
-            }
-            // 来到了一个有unit的格子
-            else {
-                // 如果是战斗场景则检查攻击逻辑
-                if (Scene.instances[0] instanceof SceneBattle){
-                    if (this.element.classList.contains('unit-cell-attack')){
-                        // 寻找unitsinside中不是this.unit的unit
-                        let newUnit = unitsInside.find(unit => unit !== this.unit);
-                        if (newUnit && this.unit){
-                            // 原有单位被摧毁
-                            this.unit.destroy();
-                            // 新单位放置
-                            this.setUnit(newUnit);
-                            console.log('unit destroyed and placed');
-                        }
-                    }
-                }
-                // 非战斗场景直接当成非法移动处理
-            }
+    destroy() {
+        if (this.unit) {
+            this.unit.destroy();
+        }
+        this.element.remove();
+        const index = UnitCell.instances.indexOf(this);
+        if (index > -1) {
+            UnitCell.instances.splice(index, 1);
+        }
+
+        // 由于unit被销毁，因此布局产生了变化，需要重新绑定所有unit，延迟100ms执行
+        Unit.instances.forEach(unit => {
+            unit.attachToCell();
         });
+
     }
 
     // unit吸附到unit-cell上
@@ -90,8 +56,6 @@ class UnitCell {
         // 更新 unit 的位置
         unit.element.style.left = (parseFloat(unit.element.style.left) || 0) + deltaX + 'px';
         unit.element.style.top = (parseFloat(unit.element.style.top) || 0) + deltaY + 'px';
-
-        this.element.classList.add('unit-cell-filled');  // 添加类
     }
 
     // 判断child的中心点是否在parent内部
@@ -117,9 +81,23 @@ class UnitCell {
 
     setUnit(unit) {
         this.unit = unit;
+
+        // 更新单位数量
+        if (unit === null) {
+            this.unitCountElement.textContent = '0';
+        } else {
+            this.unitCountElement.textContent = unit.id;
+        }
+        
         if (unit){
+            if (unit.parentCell && unit.parentCell !== this) {
+                unit.parentCell.setUnit(null);
+            }
             unit.parentCell = this;
             this.attachUnit(unit);
+            this.element.classList.add('unit-cell-filled');  // 添加类
+        } else {
+            this.element.classList.remove('unit-cell-filled');  // 移除类
         }
     }
 
@@ -159,6 +137,17 @@ class UnitContainer {
     placeUnit(unit, x, y) {
         const cell = this.getCell(x, y);
         cell.setUnit(unit);
+    }
+
+    destroy() {
+        // 如果存在 matrix，遍历并销毁所有单元
+        if (this.matrix) {
+            this.matrix.forEach(unit => {
+                if (unit) {
+                    unit.destroy();
+                }
+            });
+        }
     }
 }
 

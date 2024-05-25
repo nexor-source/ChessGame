@@ -14,11 +14,14 @@ class Scene {
     }
 
     clear() {
+        UnitCell.instances = [];
+        Unit.instances = [];
         this.elements.forEach(element => {
             document.body.removeChild(element);
         });
         this.elements = [];
     }
+
 }
 
 class ScenePrepare extends Scene {
