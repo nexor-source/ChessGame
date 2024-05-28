@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@electron/remote": "^2.1.2",
-    "electron": "^30.0.6"
+    "electron": "^30.0.6",
+    "ws": "^8.17.0"
   }
 }

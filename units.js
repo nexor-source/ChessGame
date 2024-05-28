@@ -90,14 +90,14 @@ const unitStats = {
         actLogic: (() => {
             let flags = {};
             // 走日字
-            flags['1,2'] = 'move+attack';
-            flags['1,-2'] = 'move+attack';
-            flags['-1,2'] = 'move+attack';
-            flags['-1,-2'] = 'move+attack';
-            flags['2,1'] = 'move+attack';
-            flags['2,-1'] = 'move+attack';
-            flags['-2,1'] = 'move+attack';
-            flags['-2,-1'] = 'move+attack';
+            flags['1,2'] = 'move+attack+noblock';
+            flags['1,-2'] = 'move+attack+noblock';
+            flags['-1,2'] = 'move+attack+noblock';
+            flags['-1,-2'] = 'move+attack+noblock';
+            flags['2,1'] = 'move+attack+noblock';
+            flags['2,-1'] = 'move+attack+noblock';
+            flags['-2,1'] = 'move+attack+noblock';
+            flags['-2,-1'] = 'move+attack+noblock';
             return flags;
         })()
     },
@@ -116,11 +116,13 @@ class Unit {
         this.shape = stats.shape;
         this.cost = stats.cost;
         this.actLogic = stats.actLogic;
+        this.isHeavy = stats.isHeavy;
+
         this.id = id;
         this.isEnemy = false;
         this.draggable = true;
         this.parentCell = null;
-        this.isHeavy = stats.isHeavy;
+
         this.element = document.createElement('div');
         this.element.className = 'unit';
         Unit.instances.push(this);
@@ -129,7 +131,7 @@ class Unit {
     // 设置敌方unit 
     setEnemy() {
         this.isEnemy = true;
-        // this.draggable = false;
+        this.draggable = false;
         this.element.classList.add('unit-enemy');
     }
 
@@ -152,6 +154,10 @@ class Unit {
         if (index > -1) {
             Unit.instances.splice(index, 1);
         }
+        // 更新UI中的cost之和
+        if (Scene.instances[0] instanceof SceneBattle && Scene.instances[0].gameInfo) {
+            Scene.instances[0].gameInfo.updateCost();
+        }
     }
 
     render() {
@@ -160,7 +166,7 @@ class Unit {
         shapeElement.className = `unit-shape`;
         // 重子轻子判断
         if (this.isHeavy) {
-            shapeElement.classList.add('unit-heavy');
+            this.element.classList.add('unit-heavy');
         }
         // const attackElement = document.createElement('div');
         // attackElement.textContent = this.attack;
@@ -173,6 +179,7 @@ class Unit {
         const costElement = document.createElement('div');
         costElement.textContent = this.cost;
         costElement.className = 'unit-cost';
+         
 
         this.element.appendChild(costElement);
         this.element.appendChild(shapeElement);

@@ -10,11 +10,15 @@ ipcMain.on('switch-scene', (event, newScene) => {
   if (currentWindow) {
     currentWindow.loadFile(newScene);
     currentWindow.webContents.on('did-finish-load', () => {
-      currentWindow.webContents.send('receive-deck-data', deckData);
-      deckData = null;
+      if (deckData){
+        currentWindow.webContents.send('receive-deck-data', deckData);
+        deckData = null;
+      }
     });
   }
 });
+
+
 
 function createWindow(scene) {
   const win = new BrowserWindow({
@@ -47,3 +51,4 @@ app.on('activate', () => {
     createWindow('ScenePrepare');
   }
 });
+

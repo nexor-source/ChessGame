@@ -55,8 +55,19 @@
 } */
 
 /* unit-cell  unit-cell-filled  black-cell  white-cell  move-cell  attack-cell  range-attack-cell*/
+.mask-base {
+    position: flex;
+    width: 100px;
+    height: 100px;
+    top: 0;
+    left: 0;
+    user-select: none;
+}
 
 .unit-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100px;
     height: 100px;
     background-color: #ccc;
@@ -65,7 +76,7 @@
 }
 
 .unit-cell.unit-cell-filled {
-    background-color: #575757;  /* 修改这一行为你想要的颜色 */
+    background-color: #999999;  /* 修改这一行为你想要的颜色 */
 }
 
 .unit-cell.white-cell.unit-cell-filled {
@@ -84,14 +95,29 @@
     background-color: black;
 }
 
-.unit-cell-attack {
+.mask-base.unit-cell-attack {
     background-color: red !important;
-}
-.unit-cell-move {
+    /* border-style: dashed;
+    border-width: 4px;
+    border-color: #FFFF99; 
+    animation: scale-pulse 2s infinite; */
+} 
+.mask-base.unit-cell-move {
     background-color: blue !important;
 }
-.unit-cell-attack.unit-cell-move {
+.mask-base.unit-cell-attack.unit-cell-move {
     background-color: purple !important;
+}
+.mask-base.unit-cell-noblock {
+    border-style: dashed;
+    border-width: 5px;
+    border-color: lightgreen;
+}
+
+@keyframes scale-pulse {
+    0%   {transform: scale(1);} /* 开始时，元素保持原始大小 */
+    50%  {transform: scale(0.95);} /* 中间时，元素变小 */
+    100% {transform: scale(1);} /* 结束时，元素恢复原始大小 */
 }
 
 /* 管理unit的style */
@@ -100,10 +126,15 @@
     height: 85px;
     position: absolute;
     background-color: lightblue;
+    border: 4px dashed black;
+    border-radius: 50%;
+    outline: 3px solid lightblue;
+    box-sizing: border-box;
 }
 
 .unit.unit-enemy {
     background-color: lightcoral;
+    outline: 3px solid lightcoral;
 }
 
 .unit:hover {
@@ -121,11 +152,11 @@
     overflow: visible;
     pointer-events: none;
     user-select: none;
-    border: 2px dashed black;
+    border-radius: 50%;
 }
 
-.unit-shape.unit-heavy {
-    border: 2px solid black;
+.unit.unit-heavy {
+    border: 4px solid black;
 }
 
 /* .unit-shape.triangle {
@@ -161,6 +192,7 @@
 }
 
 .unit-cost {
+    position: absolute;
     top: 0;
     left: 0;
     color: #000000;

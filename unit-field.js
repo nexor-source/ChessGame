@@ -10,12 +10,17 @@ class UnitCell {
         this.element.className = 'unit-cell';
 
         // 创建一个新的元素来显示单位数量
-        this.unitCountElement = document.createElement('div');
-        this.unitCountElement.className = 'unit-count';
-        this.unitCountElement.textContent = '0'; // 默认为0
+        // this.unitCountElement = document.createElement('div');
+        // this.unitCountElement.className = 'unit-count';
+        // this.unitCountElement.textContent = '0'; // 默认为0
+
+        // 创建一个遮罩图形
+        this.maskElement = document.createElement('div');
+        this.maskElement.classList.add('mask-base');
+
         // 让用户无法选中
-        this.unitCountElement.style.userSelect = 'none';
-        this.element.appendChild(this.unitCountElement);
+        // this.unitCountElement.style.userSelect = 'none';
+        // this.element.appendChild(this.unitCountElement);
     }
 
     destroy() {
@@ -28,7 +33,7 @@ class UnitCell {
             UnitCell.instances.splice(index, 1);
         }
 
-        // 由于unit被销毁，因此布局产生了变化，需要重新绑定所有unit，延迟100ms执行
+        // 由于unit被销毁，因此布局产生了变化，需要重新绑定所有unit
         Unit.instances.forEach(unit => {
             unit.attachToCell();
         });
@@ -81,11 +86,11 @@ class UnitCell {
         this.unit = unit;
 
         // 更新单位数量
-        if (unit) {
-            this.unitCountElement.textContent = unit.id;
-        } else {
-            this.unitCountElement.textContent = '0';
-        }
+        // if (unit) {
+        //     this.unitCountElement.textContent = unit.id;
+        // } else {
+        //     this.unitCountElement.textContent = '0';
+        // }
         
         if (unit){
             if (unit.parentCell && unit.parentCell !== this) {
@@ -102,8 +107,8 @@ class UnitCell {
     // 与另一个格子交换unit
     swapUnit(cell) {
         // 更新单位数量
-        this.unitCountElement.textContent = cell.unit.id;
-        cell.unitCountElement.textContent = this.unit.id;
+        // this.unitCountElement.textContent = cell.unit.id;
+        // cell.unitCountElement.textContent = this.unit.id;
         this.attachUnit(cell.unit);
         cell.attachUnit(this.unit);
         // 更新父母
@@ -116,9 +121,13 @@ class UnitCell {
     }
 
     render() {
+        
+        this.element.appendChild(this.maskElement);
+
         if (this.unit) {
             this.element.appendChild(this.unit.render());
         }
+        
         return this.element;
     }
 }
@@ -203,10 +212,33 @@ class UnitField extends UnitContainer {
         for (let y = 0; y < 2; y++) {
             for (let x = 0; x < 8; x++) {
                 const cell = this.getCell(x, y);
+                if ((x+y)%2===0){
+                    cell.element.classList.add('white-cell');
+                }else {
+                    cell.element.classList.add('black-cell');
+                }
                 this.element.appendChild(cell.render());
             }
         }
         return this.element;
+    }
+
+    // 加载棋子预设
+    loadPreset() {
+        for (let y = 0; y < 2; y++) {
+            for (let x = 0; x < 8; x++) {
+                let gid = y*x+1;
+                if (y === 1){
+                    gid = Math.min(6, gid+1);
+                }  
+                let unit = new Unit(gid);  // 创建一个新的 Unit
+                unit.render();
+                this.matrix[y][x].element.appendChild(unit.element);  // 渲染这个 Unit
+                this.matrix[y][x].setUnit(unit);
+                // 不是我明明在setUnit里面已经attachUnit过了我为什么还要在这里重新attach一次？
+                this.matrix[y][x].attachUnit(unit);
+            }
+        }
     }
 }
 
@@ -297,6 +329,28 @@ class UnitStore extends UnitContainer {
                 this.matrix[i][j].setUnit(unit);
                 // 不是我明明在setUnit里面已经attachUnit过了我为什么还要在这里重新attach一次？
                 this.matrix[i][j].attachUnit(unit);
+            }
+        }
+    }
+
+    // 顺序按照unitid从1到6生成单位
+    generateUnits() {
+        let gid = 1;
+        for (let i = 0; i < this.rowNum; i++) {
+            for (let j = 0; j < this.colNum; j++) {
+                if (gid > 6) {
+                    break;
+                }
+                let unit = new Unit(gid);  // 创建一个新的 Unit
+                unit.render();
+                this.matrix[i][j].element.appendChild(unit.element);  // 渲染这个 Unit
+                this.matrix[i][j].setUnit(unit);
+                // 不是我明明在setUnit里面已经attachUnit过了我为什么还要在这里重新attach一次？
+                this.matrix[i][j].attachUnit(unit);
+                gid += 1;
+            }
+            if (gid > 6) {
+                break;
             }
         }
     }

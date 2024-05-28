@@ -8,3 +8,38 @@ body {
     flex-direction: column;
     padding: 0;  /* 移除默认的 padding */
 }
+
+/* 在CSS中创建一个动画 */
+@keyframes dots {
+    0%, 20% {
+      color: rgba(0,0,0,0);
+      text-shadow:
+        .25em 0 0 rgba(0,0,0,0),
+        .5em 0 0 rgba(0,0,0,0);}
+    40% {
+      color: white;
+      text-shadow:
+        .25em 0 0 rgba(0,0,0,0),
+        .5em 0 0 rgba(0,0,0,0);}
+    60% {
+      text-shadow:
+        .25em 0 0 white,
+        .5em 0 0 rgba(0,0,0,0);}
+    80%, 100% {
+      text-shadow:
+        .25em 0 0 white,
+        .5em 0 0 white;}
+  }
+  
+  /* 应用动画到"匹配中..."文本的点 */
+  #matching-text span {
+    animation: dots 1s steps(5, end) infinite;
+  }
+
+  #matching-text {
+    font-size: 2cm; /* 调整字体大小 */
+    position: fixed; /* 使用固定定位 */
+    top: 50%; /* 从顶部开始计算位置 */
+    left: 50%; /* 从左侧开始计算位置 */
+    transform: translate(-50%, -50%); /* 使用 transform 属性来居中元素 */
+  }

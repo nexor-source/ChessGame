@@ -1,108 +1,112 @@
 const { ipcRenderer } = require('electron');
 
-
-
 window.addEventListener('DOMContentLoaded', (event) => {
-    
-    // 按钮事件绑定
-    document.getElementById('sceneSwitchButton').addEventListener('click', switchScene);
-    document.getElementById('spawnRandomUnit').addEventListener('click', spawnRandomUnit);
-
     // 暂时记录玩家卡组数据
     let tempPlayerDeck = {}
     let socket = null;
     // 根据html的不同，加载不同的场景
-    const currentURL = window.location.href;
     let currentScene = null;
-    if (currentURL.includes('scene1.html')) {
-        console.log('Loaded scene1.html');
-        currentScene = new ScenePrepare();
-        currentScene.render();
-        currentScene.unitStore.generateUnits();
-        currentScene.unitFieldPlayer.loadPreset();
-    }
 
-    else if (currentURL.includes('scene2.html')) {
-        console.log('Loaded scene2.html');
+    console.log('Loaded scene2.html');
                 
-        // 显示正在连接服务器
-        alert('正在连接服务器');
-        buildSocket().then(newSocket => {
-            socket = newSocket;
-            // 如果连接成功，则关闭正在连接服务器的窗口
-            alert('连接成功，确认以开始匹配');
-            sendMessage(socket, 'deckData', tempPlayerDeck);
-            // 添加一个监听器来等待服务器发送开始游戏的信息
-            socket.addEventListener('message', event => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'startGame') {
-                    currentScene = new SceneBattle();
-                    currentScene.render();
-                    Scene.instances = [];
-                    Scene.instances.push(currentScene);
-                    // 按照data.data中给的数据来生成所有的unit, data.data = [{id:x,position:{x:x,y:x}},{id:x,position:{x:x,y:x}}...]
-                    data.data.forEach(unitData => {
-                        spawnIDUnitAtPos(unitData.position.x, unitData.position.y, unitData.id, true);
-                    });
-                    tempPlayerDeck.forEach(unitData => {
-                        spawnIDUnitAtPos(unitData.position.x, unitData.position.y, unitData.id, false);
-                    });
-                }
-            });
+    // 显示正在连接服务器
+    alert('正在连接服务器');
+    buildSocket().then(newSocket => {
+        socket = newSocket;
+        // 如果连接成功，则关闭正在连接服务器的窗口
+        alert('连接成功，确认以开始匹配');
+        sendMessage(socket, 'deckData', tempPlayerDeck);
 
-        }).catch(error => {
-            // 如果连接失败，则显示错误消息
-            alert(`连接失败: ${error.message}`);
-            // 转回准备场景
-            ipcRenderer.send('switch-scene', 'scene1.html');
+        // 添加一个文字，内容是匹配中...，并且这三个点点点有一定的动画效果来告诉玩家当前游戏没有卡死，是在匹配中的
+        // 创建一个新的div元素来显示"匹配中..."文本
+        let matchingText = document.createElement('div');
+        matchingText.id = 'matching-text';
+        matchingText.innerHTML = '匹 配 中 <span>.</span> <span>.</span> <span>.</span>';
+
+        let sceneSwitchButton = document.createElement('button');
+        sceneSwitchButton.id = 'sceneSwitchButton';
+        sceneSwitchButton.innerText = '返回';
+        sceneSwitchButton.addEventListener('click', switchScene);
+        
+        // 将新的div元素添加到body中
+        document.body.appendChild(matchingText);
+        document.body.appendChild(sceneSwitchButton);
+
+        // 添加一个监听器来等待服务器发送开始游戏的信息
+        socket.addEventListener('message', event => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'startGame') {
+                // 删除匹配文本和返回按钮
+                document.body.removeChild(matchingText);
+                document.body.removeChild(sceneSwitchButton);
+
+                // 添加新的投降按钮
+                let surrenderButton = document.createElement('button');
+                surrenderButton.id = 'surrenderButton';
+                surrenderButton.innerText = '投降';
+                surrenderButton.addEventListener('click', () => surrender(socket));
+                document.body.appendChild(surrenderButton);
+
+                currentScene = new SceneBattle();
+                currentScene.render();
+                if (!data.moveFirst){
+                    currentScene.gameInfo.changeTurn(false);
+                }
+
+                Scene.instances = [];
+                Scene.instances.push(currentScene);
+                // 按照data.data中给的数据来生成所有的unit, data.data = [{id:x,pos:{x:x,y:x}},{id:x,pos:{x:x,y:x}}...]
+                data.data.forEach(unitData => {
+                    spawnIDUnitAtPos(unitData.pos.x, unitData.pos.y, unitData.id, true);
+                });
+                tempPlayerDeck.forEach(unitData => {
+                    spawnIDUnitAtPos(unitData.pos.x, unitData.pos.y, unitData.id, false);
+                });
+
+                currentScene.gameInfo.updateCost();
+            }
+            // 监听move type的消息，如果,data.data = { from: { x: 1, y: 4 }, to: { x: 3, y: 4 } }，按照消息的格式进行移动
+            else if (data.type === 'move') {
+                let from = data.data.from;
+                let to = data.data.to;
+                // 展示from和to的坐标
+                console.log(from, to); 
+
+                let unitClick = currentScene.battlefield.getCell(from.x,from.y).unit;
+                let cell = currentScene.battlefield.getCell(to.x,to.y);
+                checkMouseUp(unitClick, cell, true);
+                Scene.instances[0].gameInfo.changeTurn();
+            }
+            else if (data.type === 'endGame') {
+                // 游戏结束
+                if (data.data) {
+                    alert('You win!');
+                } else {
+                    alert('You lose!');
+                }
+                ipcRenderer.send('switch-scene', 'scene1.html');
+            }
         });
-    }
+        
+
+    }).catch(error => {
+        // 如果连接失败，则显示错误消息
+        alert(`连接失败: ${error.message}`);
+        // 转回准备场景
+        ipcRenderer.send('switch-scene', 'scene1.html');
+    });
 
 
     
     Scene.instances.push(currentScene);
 
     function switchScene() {
-        if (currentScene instanceof ScenePrepare) {
-            // 记录玩家选择的unitid
-            UnitStore.playerdeck = [];
-            let totalCost = 0;
-            let hasKing = false;
-            // 遍历unitfield中的所有的unit的id添加到UnitStore.playerdeck中，如果那一行没有id的话就是放入-1的id
-            for (let y = 0; y < currentScene.unitFieldPlayer.matrix.length; y++) {
-                for (let x = 0; x < currentScene.unitFieldPlayer.matrix[y].length; x++) {
-                    const unit = currentScene.unitFieldPlayer.matrix[y][x].getUnit();
-                    if (unit) {
-                        UnitStore.playerdeck.push(unit.id);
-                        totalCost += unit.cost;
-                        if (unit.id === 4){
-                            hasKing = true;
-                        }
-                    }
-                    else {
-                        UnitStore.playerdeck.push(-1);
-                    }
-                }
-            }
-
-            // 检查是否满足条件
-            if (UnitStore.playerdeck.includes(-1) || !hasKing || totalCost >= 50) {
-                alert('玩家deck不满足要求，请检查:[是否已填满]，[是否包含王]，[是否所有cost之和小于50]');
-                return;
-            }
-
-            Scene.instances = [];
-            // 输出Unitstore.playerdeck来检查是否正确
-            ipcRenderer.send('send-deck-data', UnitStore.playerdeck);
-            ipcRenderer.send('switch-scene', 'scene2.html');
-        } else {
-            ipcRenderer.send('switch-scene', 'scene1.html');
-        }
+        ipcRenderer.send('switch-scene', 'scene1.html');
     }
 
     let cellClick = null;
     let unitClick = null;
-    let cells = null;
+    let cells = [];
     let startX, startY;
     let mouseDown = false;
     document.addEventListener('mousedown', (e) => {
@@ -244,104 +248,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
             // 分成两个场景来单独写，战斗场景成功的移动需要给服务器发送json消息，type是move，data是{from:{x:x,y:y}, to:{x:x,y:y}}
             // 如果是战斗场景
-            if (Scene.instances[0] instanceof SceneBattle){
-                // 如果找到了cell
-                if (cell){
-                    // 如果cell上已经有unit
-                    if (cell.unit){
-                        // 攻击是否合法
-                        if (cell.maskElement.classList.contains('unit-cell-attack') && cell.unit.isEnemy !== unitClick.isEnemy){
-                            cell.unit.destroy();
-                            makeNewMove(socket, unitClick, cell);
-                            cell.setUnit(unitClick);
-                        } else{
-                            unitClick.revertPosition();
-                        }
-                    }
-                    // 如果cell上没有unit
-                    else{
-                        // 移动是否合法
-                        if (cell.maskElement.classList.contains('unit-cell-move')){
-                            makeNewMove(socket, unitClick, cell);
-                            cell.setUnit(unitClick);
-                        } else{
-                            unitClick.revertPosition();
-                        }
-                    }
-                }
-                // 如果没有找到cell, 则回溯
-                else{
-                    unitClick.revertPosition();
-                }
 
-                // 取消攻击范围渲染
-                if (cells.length > 0) {
-                    cells.forEach(cell => {
-                        cell.maskElement.classList.remove('unit-cell-attack');
-                        cell.maskElement.classList.remove('unit-cell-move');
-                        cell.maskElement.classList.remove('unit-cell-noblock');
-                    });
-                }
-            }
-
-            // 如果不是战斗场景
-            else if (Scene.instances[0] instanceof ScenePrepare){
-                // 如果找到了cell
-                if (cell){
-                    // 如果拖到商店
-                    if (cell.parentField instanceof UnitStore){
-                        // 如果是来自商店的unit，则回溯
-                        if (unitClick.parentCell.parentField instanceof UnitStore){
-                            unitClick.revertPosition();
-                        }
-                        // 如果是来自玩家的unit，则删除
-                        if (unitClick.parentCell.parentField instanceof UnitField){
-                            unitClick.destroy();
-                        }
-                    }
-                    // 如果拖到玩家的格子
-                    if (cell.parentField instanceof UnitField){
-                        // 检查重轻子类型和cell类型是否匹配
-                        if ((unitClick.isHeavy && cell.x === 0) || (!unitClick.isHeavy && cell.x === 1)){
-                            unitClick.revertPosition();
-                        }
-                        // 如果是来自商店的unit，则创建一个和自己id一样的unit绑定到那个格子
-                        else if (unitClick.parentCell.parentField instanceof UnitStore){
-                            if (cell.unit){
-                            }
-                            else{
-                                let unit = new Unit(unitClick.id);
-                                unit.render();
-                                cell.element.appendChild(unit.element);
-                                cell.attachUnit(unit);
-                                cell.setUnit(unit);
-                            }
-                            unitClick.revertPosition();
-                        }
-                        // 如果是来自玩家的unit
-                        else if (unitClick.parentCell.parentField instanceof UnitField){
-                            if (cell.unit){
-                                cell.swapUnit(unitClick.parentCell);
-                            }
-                            else{
-                                cell.setUnit(unitClick);
-                            }
-                        }
-                    }
-                }
-                // 如果没有找到cell
-                else{
-                    // 如果是来自商店的unit，则回溯
-                    if (unitClick.parentCell.parentField instanceof UnitStore){
-                        unitClick.revertPosition();
-                    }
-                    // 如果是来自玩家deck的unit，则删掉
-                    else if (unitClick.parentCell.parentField instanceof UnitField){
-                        unitClick.destroy();
-                    }
-                }
-                Scene.instances[0].unitFieldPlayer.UpdateCost();
-            }
+            // 如果找到了cell
+            checkMouseUp(unitClick, cell);
         }
     }); 
 
@@ -355,7 +264,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 if (data[i] != -1) {
                     const x = i % 8;
                     const y = 6 + Math.floor(i / 8);
-                    tempPlayerDeck.push({ id: data[i], position: { x, y } });
+                    tempPlayerDeck.push({ id: data[i], pos: { x, y } });
                     // 半永久记录卡组数据
                 }
             }
@@ -389,10 +298,62 @@ window.addEventListener('DOMContentLoaded', (event) => {
             const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
             randomCell.setUnit(unit);
         }
+    }
+
+    function checkMouseUp(unitClick, cell, from_enemy = false) {
+        if (from_enemy){
+            if (cell && unitClick){
+                if (cell.unit){
+                    cell.unit.destroy();
+                    cell.setUnit(unitClick);
+                }
+                else{
+                    cell.setUnit(unitClick);
+                }
+            }
+            else{
+                unitClick.revertPosition();
+                console.log('opponent makes an invalid move');
+            }
+        }
+        else {
+            if (cell && unitClick && Scene.instances[0].gameInfo.isYourTurn){
+                // 如果cell上已经有unit
+                if (cell.unit){
+                    // 攻击是否合法
+                    if (cell.maskElement.classList.contains('unit-cell-attack') && cell.unit.isEnemy !== unitClick.isEnemy){
+                        cell.unit.destroy();
+                        makeNewMove(socket, unitClick, cell);
+                        cell.setUnit(unitClick);
+                    } else{
+                        unitClick.revertPosition();
+                    }
+                }
+                // 如果cell上没有unit
+                else{
+                    // 移动是否合法
+                    if (cell.maskElement.classList.contains('unit-cell-move')){
+                        makeNewMove(socket, unitClick, cell);
+                        cell.setUnit(unitClick);
+                    } else{
+                        unitClick.revertPosition();
+                    }
+                }
+            }
+            // 如果没有找到cell, 则回溯
+            else{
+                unitClick.revertPosition();
+            }
     
-        // else if (currentScene instanceof ScenePrepare){
-        //     currentScene.unitStore.randomizeUnits();
-        // }
+            // 取消攻击范围渲染
+            if (cells.length > 0) {
+                cells.forEach(cell => {
+                    cell.maskElement.classList.remove('unit-cell-attack');
+                    cell.maskElement.classList.remove('unit-cell-move');
+                    cell.maskElement.classList.remove('unit-cell-noblock');
+                });
+            }
+        }
     }
 });
 
@@ -424,4 +385,19 @@ function makeNewMove(socket, unit, cell) {
     to: {x: cell.x, y:cell.y}}
     const message = JSON.stringify({ type, data });
     socket.send(message);
+    checkEndGame(socket);
+    Scene.instances[0].gameInfo.changeTurn();
+}
+
+function checkEndGame(socket){
+    if (Scene.instances[0].gameInfo.playerCost <= 40){
+        sendMessage(socket, 'endGame', false);
+    }
+    else if (Scene.instances[0].gameInfo.opponentCost <= 40){
+        sendMessage(socket, 'endGame', true);
+    }
+}
+
+function surrender(socket){
+    sendMessage(socket, 'endGame', false);
 }
