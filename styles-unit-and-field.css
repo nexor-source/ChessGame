@@ -55,15 +55,6 @@
 } */
 
 /* unit-cell  unit-cell-filled  black-cell  white-cell  move-cell  attack-cell  range-attack-cell*/
-.mask-base {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    top: 0;
-    left: 0;
-    user-select: none;
-}
-
 .unit-cell {
     position: relative;
     width: 100px;
@@ -73,15 +64,24 @@
     user-select: none;
 }
 
+.mask-base {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 0;
+    left: 0;
+    user-select: none;
+}
+
 .unit-cell.unit-cell-filled {
     background-color: #999999;  /* 修改这一行为你想要的颜色 */
 }
 
-.unit-cell.white-cell.unit-cell-filled {
+.white-cell.unit-cell-filled {
     background-color: #e3e3e3;  /* 修改这一行为你想要的颜色 */
 }
 
-.unit-cell.black-cell.unit-cell-filled {
+.black-cell.unit-cell-filled {
     background-color: #2a2a2a;  /* 修改这一行为你想要的颜色 */
 }
 
@@ -93,18 +93,27 @@
     background-color: black;
 }
 
-.mask-base.mark-enemy {
+
+.replay-base {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 0;
+    left: 0;
+    user-select: none;
+}
+.replay-base.mark-enemy {
     background-color: crimson;
-    z-index: 2;
+    z-index: 10;
 }
-.mask-base.mark-yourself{
+.replay-base.mark-yourself{
     background-color: lightseagreen;
-    z-index: 2;
+    z-index: 10;
 }
-.mask-base.from{
+.replay-base.from{
     animation: blinkFrom 2s infinite;
 }
-.mask-base.to{
+.replay-base.to{
     animation: blinkTo 2s infinite;
 }
 
@@ -144,23 +153,27 @@
 } */
 
 .unit-cell.unit-cell-attack {
-    background-color: red !important;
-    /* border-style: dashed;
-    border-width: 4px;
-    border-color: #FFFF99; 
-    animation: scale-pulse 2s infinite; */
+    background-color: red ;
 } 
 .unit-cell.unit-cell-move {
-    background-color: blue !important;
+    background-color: blue ;
 }
 .unit-cell.unit-cell-attack.unit-cell-move {
-    background-color: purple !important;
+    background-color: purple ;
 }
-.unit-cell.unit-cell-noblock {
+.mask-base.unit-cell-noblock {
     border-style: dashed;
     border-width: 5px;
     border-color: lightgreen;
     box-sizing: border-box;
+}
+
+.mask-base.unit-cell-range {
+    background-image: url('unit_pics/zx.png');
+    background-position: center;  /* 让背景图片居中 */
+    background-repeat: no-repeat;
+    background-size: 50%;  /* 让背景图片变小 */
+    z-index: 2;
 }
 
 @keyframes scale-pulse {
@@ -253,7 +266,13 @@
     color: #000000;
     background-color: rgb(255, 227, 18);
     padding: 2px;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: bold;
+    width: 20px;  /* 减小宽度 */
+    height: 20px;  /* 减小高度 */
+    border-radius: 50%;  /* 设置边框半径为 50% 使背景变为圆形 */
+    line-height: 20px;  /* 减小行高使文本垂直居中 */
+    text-align: center;  /* 设置文本水平居中 */
 }
 
 #gold-amount {
@@ -271,7 +290,7 @@
     right: 5px;
     bottom: 0;
     color: #007BFF;
-    text-shadow: 0 0 15px #007BFF, 0 0 30px #007BFF, 0 0 45px #007BFF, 0 0 60px #007BFF;
+    text-shadow: 0 0 3px #007BFF, 0 0 6px #007BFF, 0 0 12px #007BFF, 0 0 18px #007BFF;
 }
 
 .right-bottom-red {
@@ -279,5 +298,5 @@
     right: 5px;
     bottom: 0;
     color: #FF0000;
-    text-shadow: 0 0 15px #FF0000, 0 0 30px #FF0000, 0 0 45px #FF0000, 0 0 60px #FF0000;
+    text-shadow: 0 0 3px #FF0000, 0 0 6px #FF0000, 0 0 12px #FF0000, 0 0 18px #FF0000;
 }

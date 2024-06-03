@@ -75,7 +75,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
                 let unitClick = currentScene.battlefield.getCell(from.x,from.y).unit;
                 let cell = currentScene.battlefield.getCell(to.x,to.y);
-                checkMouseUp(unitClick, cell, true);
+                checkMouseUp(unitClick, cell, true, data.data.range);
                 Scene.instances[0].gameInfo.changeTurn();
             }
             else if (data.type === 'endGame') {
@@ -194,7 +194,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
             cells.forEach(cell => {
                 cell.element.classList.remove('unit-cell-attack');
                 cell.element.classList.remove('unit-cell-move');
-                cell.element.classList.remove('unit-cell-noblock');
+                cell.maskElement.classList.remove('unit-cell-noblock');
+                cell.maskElement.classList.remove('unit-cell-range');
             });
         }
     }); 
@@ -246,7 +247,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
         }
     }
 
-    function checkMouseUp(unitClick, cell, from_enemy = false) {
+    function checkMouseUp(unitClick, cell, from_enemy = false, from_range = false) {
         let successMove = false;
         const fromCell = unitClick.parentCell;
         const toCell = cell;
@@ -260,66 +261,93 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 successMove = true;
             }
             else{
-                unitClick.revertPosition();
+                // unitClick.revertPosition();
                 console.log('opponent makes an invalid move');
             }
         }
         else if (unitClick.isEnemy){
-            unitClick.revertPosition();
+            // unitClick.revertPosition();
         }
         else {
-
             if (cell && unitClick && Scene.instances[0].gameInfo.isYourTurn){
                 // 如果cell上已经有unit
                 if (cell.unit){
                     // 攻击是否合法
                     if (cell.element.classList.contains('unit-cell-attack') && cell.unit.isEnemy !== unitClick.isEnemy){
                         cell.unit.destroy();
-                        makeNewMove(socket, unitClick, cell);
                         successMove = true;
-                    } else{
-                        unitClick.revertPosition();
                     }
                 }
                 // 如果cell上没有unit
                 else{
                     // 移动是否合法
                     if (cell.element.classList.contains('unit-cell-move')){
-                        makeNewMove(socket, unitClick, cell);
                         successMove = true;
-                    } else{
-                        unitClick.revertPosition();
-                    }
+                    } 
                 }
             }
-            // 如果没有找到cell, 则回溯
-            else{
-                unitClick.revertPosition();
-            }
         }
+        
         if (successMove){
-            // 移出之前标记的from  to
+            // 移出之前标记的from  to，并且添加新的from to标记
             const classList = ['from', 'to', 'mark-enemy', 'mark-yourself'];
             for (let i = 0; i < classList.length; i++){
                 document.querySelectorAll(`.${classList[i]}`).forEach((element) => {
                     element.classList.remove(classList[i]);
                 });
             }
-            fromCell.maskElement.classList.add('from');
-            toCell.maskElement.classList.add('to');
+            fromCell.replayElement.classList.add('from');
+            toCell.replayElement.classList.add('to');
             if (from_enemy){
-                fromCell.maskElement.classList.add('mark-enemy');
-                toCell.maskElement.classList.add('mark-enemy');
+                fromCell.replayElement.classList.add('mark-enemy');
+                toCell.replayElement.classList.add('mark-enemy');
             }
             else{
-                fromCell.maskElement.classList.add('mark-yourself');
-                toCell.maskElement.classList.add('mark-yourself');
+                fromCell.replayElement.classList.add('mark-yourself');
+                toCell.replayElement.classList.add('mark-yourself');
             }
 
-            cell.setUnit(unitClick);
+            // 检查unit是否会进行升变(prompt)，也就是检查非heavy的unit是否到了对方的底线。
+            let prompt = false;
+            if (unitClick.promptID){
+                if (unitClick.isEnemy){
+                    if (cell.y === 7){
+                        prompt = true;
+                    }
+                }
+                else{
+                    if (cell.y === 0){
+                        prompt = true;
+                    }
+                }
+            }
+            
+            // 移动
+            unitClick.firstMove = false;
+            
+            // 远程攻击逻辑 + 信息发送
+            if (cell.maskElement.classList.contains('unit-cell-range') || from_range){
+                if (!from_enemy) makeNewMove(socket, unitClick, cell, true);
+                unitClick.revertPosition();
+            }
+            else{
+                if (!from_enemy) makeNewMove(socket, unitClick, cell);
+                cell.setUnit(unitClick);
+            }
+
+            // 晋升逻辑
+            if (prompt){
+                const x = unitClick.isEnemy;
+                unitClick.destroy();
+                spawnIDUnitAtPos(cell.x, cell.y, unitClick.promptID, x);
+                Scene.instances[0].gameInfo.updateCost();
+            }
             
             // 更新右下角信息
             Scene.instances[0].battlefield.updateRightBottomElement();
+        }
+        else {
+            unitClick.revertPosition();
         }
     }
     
@@ -347,10 +375,11 @@ function sendMessage(socket, type, data) {
     socket.send(message);
 }
 
-function makeNewMove(socket, unit, cell) {
+function makeNewMove(socket, unit, cell, range = false) {
     let type = 'move';
     let data = {from:{ x: unit.parentCell.x, y: unit.parentCell.y},
-    to: {x: cell.x, y:cell.y}}
+    to: {x: cell.x, y:cell.y},
+    range: range};
     const message = JSON.stringify({ type, data });
 
     socket.send(message);

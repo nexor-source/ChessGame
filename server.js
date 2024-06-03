@@ -22,6 +22,12 @@ wss.on('connection', ws => {
 
     switch (data.type) {
       case 'deckData':
+        // 检查 data.data 是否是一个数组
+        if (!Array.isArray(data.data)) {
+          console.error('Invalid data:', data.data);
+          return;
+        }
+
         // 以敌方的坐标来记录玩家的卡组信息
         // 遍历data.data这个list的每一个元素，将每个元素的.pos.y -= 6
         data.data = data.data.map(item => {

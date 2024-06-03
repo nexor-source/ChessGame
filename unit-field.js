@@ -14,9 +14,13 @@ class UnitCell {
         // this.unitCountElement.className = 'unit-count';
         // this.unitCountElement.textContent = '0'; // 默认为0
 
-        // 创建一个遮罩图形
+        // 创建一个遮罩图形，用于攻击特效展示
         this.maskElement = document.createElement('div');
         this.maskElement.classList.add('mask-base');
+
+        // 创建一个遮罩图形，用于行动回放
+        this.replayElement = document.createElement('div');
+        this.replayElement.classList.add('replay-base');
         
         // 让用户无法选中
         // this.unitCountElement.style.userSelect = 'none';
@@ -131,9 +135,26 @@ class UnitCell {
         this.element.appendChild(this.rightBottomElement);
     }
 
+    // 判断和另一个格子之间是否有unit
+    hasUnitBetween(cell) {
+        // 计算两个cell之间的x,y坐标差
+        let dx = cell.x - this.x;
+        let dy = cell.y - this.y;
+
+        // 检查两个cell之间是否有其他unit
+        for (let i = 1; i < Math.max(Math.abs(dx), Math.abs(dy)); i++){
+            let targetCell = this.parentField.getCell(this.x + Math.sign(dx) * i, this.y + Math.sign(dy) * i);
+            if (targetCell.unit){
+                return true;
+            }
+        }
+        return false;
+    }
+
     render() {
         
         this.element.appendChild(this.maskElement);
+        this.element.appendChild(this.replayElement);
 
         if (this.unit) {
             this.element.appendChild(this.unit.render());
@@ -336,26 +357,25 @@ class UnitBattleField extends UnitContainer {
                         const logicWords = ['move', 'attack'];
                         for (let k = 0; k < logicWords.length; k++){
                             const logicWord = logicWords[k];
+                            if (logic.includes('first') && !unitClick.firstMove){
+                                continue;
+                            }
                             if (logic.includes(logicWord)){
                                 if (logic.includes('noblock')){
-                                    cell.element.classList.add(`unit-cell-${logicWord}`, 'unit-cell-noblock');
+                                    cell.element.classList.add(`unit-cell-${logicWord}`)
+                                    cell.maskElement.classList.add('unit-cell-noblock');
+                                    // 如果logicword是attack且logic有range的特性，则额外添加一个class
+                                    if (logicWord === 'attack' && logic.includes('range')){
+                                        cell.maskElement.classList.add('unit-cell-range');
+                                    }
                                 }
                                 else {
-                                    // 计算cell和unitClick的parentCell之间的x,y坐标差
-                                    let dx = cell.x - unitClick.parentCell.x;
-                                    let dy = cell.y - unitClick.parentCell.y;
-    
-                                    // 检查cell和unitClick的parentCell之间是否有其他unit
-                                    let blocked = false;
-                                    for (let i = 1; i < Math.max(Math.abs(dx), Math.abs(dy)); i++){
-                                        let targetCell = unitClick.parentCell.parentField.getCell(unitClick.parentCell.x + Math.sign(dx) * i, unitClick.parentCell.y + Math.sign(dy) * i);
-                                        if (targetCell.unit){
-                                            blocked = true;
-                                            break;
-                                        }
-                                    }
+                                    let blocked = cell.hasUnitBetween(unitClick.parentCell);
                                     if (!blocked){
                                         cell.element.classList.add(`unit-cell-${logicWord}`);
+                                        if (logicWord === 'attack' && logic.includes('range')){
+                                            cell.maskElement.classList.add('unit-cell-range');
+                                        }
                                     }
                                 }
                             }
@@ -402,19 +422,7 @@ class UnitBattleField extends UnitContainer {
                                         attackCount[cell.y][cell.x] += theta;
                                     }
                                     else {
-                                        // 计算cell和unitClick的parentCell之间的x,y坐标差
-                                        let dx = cell.x - unit.parentCell.x;
-                                        let dy = cell.y - unit.parentCell.y;
-        
-                                        // 检查cell和unitClick的parentCell之间是否有其他unit
-                                        let blocked = false;
-                                        for (let i = 1; i < Math.max(Math.abs(dx), Math.abs(dy)); i++){
-                                            let targetCell = unit.parentCell.parentField.getCell(unit.parentCell.x + Math.sign(dx) * i, unit.parentCell.y + Math.sign(dy) * i);
-                                            if (targetCell.unit){
-                                                blocked = true;
-                                                break;
-                                            }
-                                        }
+                                        let blocked = cell.hasUnitBetween(unit.parentCell);
                                         if (!blocked){
                                             attackCount[cell.y][cell.x] += theta;
                                         }
@@ -485,7 +493,7 @@ class UnitStore extends UnitContainer {
         
         for (let i = 0; i < this.rowNum; i++) {
             for (let j = 0; j < this.colNum; j++) {
-                if (gid > 6) {
+                if (gid > 15) {
                     break;
                 }
                 let unit = new Unit(gid);  // 创建一个新的 Unit
@@ -496,7 +504,7 @@ class UnitStore extends UnitContainer {
                 this.matrix[i][j].attachUnit(unit);
                 gid += 1;
             }
-            if (gid > 6) {
+            if (gid > 15) {
                 break;
             }
         }
