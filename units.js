@@ -3,7 +3,7 @@ const { stat } = require("original-fs");
 const unitStats = {
     // pawn
     1: { 
-        cost: 1, 
+        cost: 0, 
         isHeavy: false,
         actLogic: (() => {
             let flags = {};
@@ -15,7 +15,7 @@ const unitStats = {
     },
     // bishop
     2: { 
-        cost: 2,
+        cost: 10,
         isHeavy: true, 
         actLogic: (() => {
             let flags = {};
@@ -31,7 +31,7 @@ const unitStats = {
     },
     // queen
     3: { 
-        cost: 3, 
+        cost: 21, 
         isHeavy: true,
         actLogic: (() => {
             let flags = {};
@@ -52,7 +52,7 @@ const unitStats = {
     },
     // king
     4: { 
-        cost: 4, 
+        cost: 23, 
         isHeavy: true,
         actLogic: (() => {
             let flags = {};
@@ -68,7 +68,7 @@ const unitStats = {
     },
     // rook
     5: { 
-        cost: 5, 
+        cost: 12, 
         isHeavy: true,
         actLogic: (() => {
             let flags = {};
@@ -131,7 +131,7 @@ class Unit {
     // 设置敌方unit 
     setEnemy() {
         this.isEnemy = true;
-        this.draggable = false;
+        // this.draggable = false;
         this.element.classList.add('unit-enemy');
     }
 
@@ -156,6 +156,15 @@ class Unit {
         }
         // 更新UI中的cost之和
         if (Scene.instances[0] instanceof SceneBattle && Scene.instances[0].gameInfo) {
+            // 如果是king被吃了
+            if (this.id === 4) {
+                if (this.isEnemy) {
+                    Scene.instances[0].gameInfo.changeKingDead(true);
+                }
+                else {
+                    Scene.instances[0].gameInfo.changeKingDead(false);
+                }
+            }
             Scene.instances[0].gameInfo.updateCost();
         }
     }

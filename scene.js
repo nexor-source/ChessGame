@@ -5,8 +5,21 @@ class GameInfo {
         this.remainingTime = 0;
         this.playerCost = 0;
         this.opponentCost = 0;
+        this.playerCostDelta = 0;
+        this.opponentCostDelta = 0;
         this.round = 0;
         this.element = document.createElement('div');
+        this.isKingDead = false;
+        this.isKingDeadEnemy = false;
+    }
+
+    // 修改king死亡状态
+    changeKingDead(isEnemy) {
+        if (isEnemy) {
+            this.isKingDeadEnemy = true;
+        } else {
+            this.isKingDead = true;
+        }
     }
 
     render() {
@@ -14,8 +27,8 @@ class GameInfo {
         this.element.innerHTML = `
             <p>当前回合: ${this.nowPlayerName}</p>
             <p>剩余时间: ${this.remainingTime}</p>
-            <p>我方棋子花费总和: ${this.playerCost}</p>
-            <p>敌方棋子花费总和: ${this.opponentCost}</p>
+            <p>我方棋子士气总和: ${this.playerCost}</p>
+            <p>敌方棋子士气总和: ${this.opponentCost}</p>
             <p>回合数: ${this.round}</p>
         `;
         return this.element;
@@ -25,7 +38,19 @@ class GameInfo {
         this.isYourTurn = !this.isYourTurn;
         this.nowPlayerName = this.isYourTurn ? 'You' : 'Opponent';
         if (changeRound) this.round++;
-        this.render();
+        // 如果某人的回合开始时自己没有王，则costdelta会-2
+        if (this.isYourTurn && this.isKingDead) {
+            this.updateCostDelta(-2, 0);
+        }
+        else if (!this.isYourTurn && this.isKingDeadEnemy) {
+            this.updateCostDelta(0, -2);
+        }
+        this.updateCost();
+    }
+
+    updateCostDelta(playerCostDeltaChange, opponentCostDeltaChange) {
+        this.playerCostDelta += playerCostDeltaChange;
+        this.opponentCostDelta += opponentCostDeltaChange;
     }
 
     updateCost() {
@@ -39,6 +64,10 @@ class GameInfo {
                 this.playerCost += unit.cost;
             }
         });
+        // 额外改变，可能不止王一种棋子
+        this.playerCost += this.playerCostDelta;
+        this.opponentCost += this.opponentCostDelta;
+
         this.render();
     }
 }

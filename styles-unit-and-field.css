@@ -56,7 +56,7 @@
 
 /* unit-cell  unit-cell-filled  black-cell  white-cell  move-cell  attack-cell  range-attack-cell*/
 .mask-base {
-    position: flex;
+    position: absolute;
     width: 100px;
     height: 100px;
     top: 0;
@@ -65,9 +65,7 @@
 }
 
 .unit-cell {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: relative;
     width: 100px;
     height: 100px;
     background-color: #ccc;
@@ -95,23 +93,74 @@
     background-color: black;
 }
 
-.mask-base.unit-cell-attack {
+.mask-base.mark-enemy {
+    background-color: crimson;
+    z-index: 2;
+}
+.mask-base.mark-yourself{
+    background-color: lightseagreen;
+    z-index: 2;
+}
+.mask-base.from{
+    animation: blinkFrom 2s infinite;
+}
+.mask-base.to{
+    animation: blinkTo 2s infinite;
+}
+
+@keyframes blinkFrom {
+    0% {opacity: 0;}
+    49.99% {opacity: 0;}
+    50% {opacity: 0.5;}
+    99.99% {opacity: 0.5;}
+    100% {opacity: 0;}
+}
+
+@keyframes blinkTo {
+    0% {opacity: 0.5;}
+    49.99% {opacity: 0.5;}
+    50% {opacity: 0;}
+    99.99% {opacity: 0;}
+    100% {opacity: 0.5;}
+}
+
+/* .mask-base.unit-cell-attack {
+    background-color: red !important;
+} 
+
+.mask-base.unit-cell-move {
+    background-color: blue !important;
+}
+
+.mask-base.unit-cell-attack.unit-cell-move {
+    background-color: purple !important;
+}
+
+.mask-base.unit-cell-noblock {
+    border-style: dashed;
+    border-width: 5px;
+    border-color: lightgreen;
+    box-sizing: border-box;
+} */
+
+.unit-cell.unit-cell-attack {
     background-color: red !important;
     /* border-style: dashed;
     border-width: 4px;
     border-color: #FFFF99; 
     animation: scale-pulse 2s infinite; */
 } 
-.mask-base.unit-cell-move {
+.unit-cell.unit-cell-move {
     background-color: blue !important;
 }
-.mask-base.unit-cell-attack.unit-cell-move {
+.unit-cell.unit-cell-attack.unit-cell-move {
     background-color: purple !important;
 }
-.mask-base.unit-cell-noblock {
+.unit-cell.unit-cell-noblock {
     border-style: dashed;
     border-width: 5px;
     border-color: lightgreen;
+    box-sizing: border-box;
 }
 
 @keyframes scale-pulse {
@@ -130,6 +179,11 @@
     border-radius: 50%;
     outline: 3px solid lightblue;
     box-sizing: border-box;
+    z-index: 1;
+}
+
+.unit.in-battle{
+    transition: top 0.5s, left 0.5s;
 }
 
 .unit.unit-enemy {
@@ -139,6 +193,7 @@
 
 .unit:hover {
     filter: saturate(65%);  /* 修改这一行为你想要的饱和度 */
+    cursor: grab;
     /* background-color: #d4d4d4; */
 }
 
@@ -209,4 +264,20 @@
     color: #FFD700; /* 金色字体 */
     text-shadow: 2px 2px 4px #000000; /* 添加文字阴影 */
     user-select: none;
+}
+
+.right-bottom-blue {
+    position: absolute;
+    right: 5px;
+    bottom: 0;
+    color: #007BFF;
+    text-shadow: 0 0 15px #007BFF, 0 0 30px #007BFF, 0 0 45px #007BFF, 0 0 60px #007BFF;
+}
+
+.right-bottom-red {
+    position: absolute;
+    right: 5px;
+    bottom: 0;
+    color: #FF0000;
+    text-shadow: 0 0 15px #FF0000, 0 0 30px #FF0000, 0 0 45px #FF0000, 0 0 60px #FF0000;
 }

@@ -19,7 +19,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
         // 记录玩家选择的unitid
         UnitStore.playerdeck = [];
         let totalCost = 0;
-        let hasKing = false;
+        let kingNum = 0;
         // 遍历unitfield中的所有的unit的id添加到UnitStore.playerdeck中，如果那一行没有id的话就是放入-1的id
         for (let y = 0; y < currentScene.unitFieldPlayer.matrix.length; y++) {
             for (let x = 0; x < currentScene.unitFieldPlayer.matrix[y].length; x++) {
@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
                     UnitStore.playerdeck.push(unit.id);
                     totalCost += unit.cost;
                     if (unit.id === 4){
-                        hasKing = true;
+                        kingNum += 1;
                     }
                 }
                 else {
@@ -38,10 +38,23 @@ window.addEventListener('DOMContentLoaded', (event) => {
         }
 
         // 检查是否满足条件
-        if (UnitStore.playerdeck.includes(-1) || !hasKing || totalCost >= 50) {
-            alert('玩家deck不满足要求，请检查:[是否已填满]，[是否包含王]，[是否所有cost之和小于50]');
+        if (UnitStore.playerdeck.includes(-1)){
+            alert('玩家卡组必须填满，请检查');
             return;
         }
+        else if (!kingNum){
+            alert('玩家卡组必须包含国王，请检查');
+            return;
+        }
+        else if (totalCost > 100){
+            alert('玩家卡组cost之和不能超过100，请检查');
+            return;
+        }
+        else if (kingNum > 1){
+            alert('玩家卡组只能包含一个国王，请检查');
+            return;
+        }
+
 
         Scene.instances = [];
         // 输出Unitstore.playerdeck来检查是否正确
@@ -145,17 +158,20 @@ window.addEventListener('DOMContentLoaded', (event) => {
                     }
                     // 如果是来自商店的unit，则创建一个和自己id一样的unit绑定到那个格子
                     else if (unitClick.parentCell.parentField instanceof UnitStore){
+                        // 如果有，就销毁原来的unit
                         if (cell.unit){
+                            cell.unit.destroy();
                         }
-                        else{
-                            let unit = new Unit(unitClick.id);
-                            unit.render();
-                            cell.element.appendChild(unit.element);
-                            cell.attachUnit(unit);
-                            cell.setUnit(unit);
-                        }
+                        // 放置你从商店拖过来的unit
+                        let unit = new Unit(unitClick.id);
+                        unit.render();
+
+                        cell.element.appendChild(unit.element);
+                        cell.attachUnit(unit);
+                        cell.setUnit(unit);
                         unitClick.revertPosition();
                     }
+                    
                     // 如果是来自玩家的unit
                     else if (unitClick.parentCell.parentField instanceof UnitField){
                         if (cell.unit){

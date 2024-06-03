@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
         sceneSwitchButton.id = 'sceneSwitchButton';
         sceneSwitchButton.innerText = '返回';
         sceneSwitchButton.addEventListener('click', switchScene);
-        
+
         // 将新的div元素添加到body中
         document.body.appendChild(matchingText);
         document.body.appendChild(sceneSwitchButton);
@@ -64,6 +64,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 });
 
                 currentScene.gameInfo.updateCost();
+                currentScene.battlefield.updateRightBottomElement();
             }
             // 监听move type的消息，如果,data.data = { from: { x: 1, y: 4 }, to: { x: 3, y: 4 } }，按照消息的格式进行移动
             else if (data.type === 'move') {
@@ -97,14 +98,13 @@ window.addEventListener('DOMContentLoaded', (event) => {
     });
 
 
-    
+
     Scene.instances.push(currentScene);
 
     function switchScene() {
         ipcRenderer.send('switch-scene', 'scene1.html');
     }
 
-    let cellClick = null;
     let unitClick = null;
     let cells = [];
     let startX, startY;
@@ -146,68 +146,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
         // 渲染攻击范围
         cells = [];
         if (unitClick){
-            if (unitClick.parentCell && Scene.instances[0] instanceof SceneBattle) {
-                // 获取unitClick的actlogic
-                let actLogic = unitClick.actLogic;
-                // 遍历actlogic中的所有key
-                for (let key in actLogic){
-                    let [dx, dy] = key.split(',').map(Number);
-                    let cell = unitClick.parentCell.parentField.getCell(unitClick.parentCell.x + dx, unitClick.parentCell.y + dy);
-                    // 将actlogic[key]按照'+'分割
-                    const logic = actLogic[key].split('+');
-                    if (cell){
-                        // move在logic中
-                        if (logic.includes('move')){
-                            if (logic.includes('noblock')){
-                                cell.maskElement.classList.add('unit-cell-move', 'unit-cell-noblock');
-                            }
-                            else {
-                                // 计算cell和unitClick的parentCell之间的x,y坐标差
-                                let dx = cell.x - unitClick.parentCell.x;
-                                let dy = cell.y - unitClick.parentCell.y;
-
-                                // 检查cell和unitClick的parentCell之间是否有其他unit
-                                let blocked = false;
-                                for (let i = 1; i < Math.max(Math.abs(dx), Math.abs(dy)); i++){
-                                    let targetCell = unitClick.parentCell.parentField.getCell(unitClick.parentCell.x + Math.sign(dx) * i, unitClick.parentCell.y + Math.sign(dy) * i);
-                                    if (targetCell.unit){
-                                        blocked = true;
-                                        break;
-                                    }
-                                }
-                                if (!blocked){
-                                    cell.maskElement.classList.add('unit-cell-move');
-                                }
-                            }
-                        }
-                        // attack在logic中
-                        if (logic.includes('attack')){
-                            if (logic.includes('noblock')){
-                                cell.maskElement.classList.add('unit-cell-attack', 'unit-cell-noblock');
-                            }
-                            else {
-                                // 计算cell和unitClick的parentCell之间的x,y坐标差
-                                let dx = cell.x - unitClick.parentCell.x;
-                                let dy = cell.y - unitClick.parentCell.y;
-                                
-                                // 检查cell和unitClick的parentCell之间是否有其他unit
-                                let blocked = false;
-                                for (let i = 1; i < Math.max(Math.abs(dx), Math.abs(dy)); i++){
-                                    let targetCell = unitClick.parentCell.parentField.getCell(unitClick.parentCell.x + Math.sign(dx) * i, unitClick.parentCell.y + Math.sign(dy) * i);
-                                    if (targetCell.unit){
-                                        blocked = true;
-                                        break;
-                                    }
-                                }
-                                if (!blocked){
-                                    cell.maskElement.classList.add('unit-cell-attack');
-                                }
-                            }
-                        }
-                        cells.push(cell);
-                    }
-                }
-            }
+            cells = Scene.instances[0].battlefield.renderAttackRange(unitClick);
         }
     });
 
@@ -246,11 +185,17 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 );
             });
 
-            // 分成两个场景来单独写，战斗场景成功的移动需要给服务器发送json消息，type是move，data是{from:{x:x,y:y}, to:{x:x,y:y}}
-            // 如果是战斗场景
-
             // 如果找到了cell
             checkMouseUp(unitClick, cell);
+        }
+
+        // 取消攻击范围渲染
+        if (cells.length > 0) {
+            cells.forEach(cell => {
+                cell.element.classList.remove('unit-cell-attack');
+                cell.element.classList.remove('unit-cell-move');
+                cell.element.classList.remove('unit-cell-noblock');
+            });
         }
     }); 
 
@@ -279,13 +224,14 @@ window.addEventListener('DOMContentLoaded', (event) => {
         // 如果是战场才会生成
         if (currentScene instanceof SceneBattle) {
             const battlefield = currentScene.getBattleField();
-    
-            battlefield.element.appendChild(unit.render());  // 渲染这个 Unit
+            unit.render();
+            unit.element.classList.add('in-battle');
+            battlefield.element.appendChild(unit.element);  // 渲染这个 Unit
             const targetCell = battlefield.getCell(x, y);
             targetCell.setUnit(unit);
         }
     }
-    
+
     function spawnRandomUnit() {
         const unit = new Unit(Math.floor(Math.random() * 6)+1);  // 创建一个新的 Unit
         unit.setEnemy();
@@ -301,30 +247,36 @@ window.addEventListener('DOMContentLoaded', (event) => {
     }
 
     function checkMouseUp(unitClick, cell, from_enemy = false) {
+        let successMove = false;
+        const fromCell = unitClick.parentCell;
+        const toCell = cell;
         if (from_enemy){
             if (cell && unitClick){
                 if (cell.unit){
                     cell.unit.destroy();
-                    cell.setUnit(unitClick);
                 }
                 else{
-                    cell.setUnit(unitClick);
                 }
+                successMove = true;
             }
             else{
                 unitClick.revertPosition();
                 console.log('opponent makes an invalid move');
             }
         }
+        else if (unitClick.isEnemy){
+            unitClick.revertPosition();
+        }
         else {
+
             if (cell && unitClick && Scene.instances[0].gameInfo.isYourTurn){
                 // 如果cell上已经有unit
                 if (cell.unit){
                     // 攻击是否合法
-                    if (cell.maskElement.classList.contains('unit-cell-attack') && cell.unit.isEnemy !== unitClick.isEnemy){
+                    if (cell.element.classList.contains('unit-cell-attack') && cell.unit.isEnemy !== unitClick.isEnemy){
                         cell.unit.destroy();
                         makeNewMove(socket, unitClick, cell);
-                        cell.setUnit(unitClick);
+                        successMove = true;
                     } else{
                         unitClick.revertPosition();
                     }
@@ -332,9 +284,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 // 如果cell上没有unit
                 else{
                     // 移动是否合法
-                    if (cell.maskElement.classList.contains('unit-cell-move')){
+                    if (cell.element.classList.contains('unit-cell-move')){
                         makeNewMove(socket, unitClick, cell);
-                        cell.setUnit(unitClick);
+                        successMove = true;
                     } else{
                         unitClick.revertPosition();
                     }
@@ -344,17 +296,33 @@ window.addEventListener('DOMContentLoaded', (event) => {
             else{
                 unitClick.revertPosition();
             }
-    
-            // 取消攻击范围渲染
-            if (cells.length > 0) {
-                cells.forEach(cell => {
-                    cell.maskElement.classList.remove('unit-cell-attack');
-                    cell.maskElement.classList.remove('unit-cell-move');
-                    cell.maskElement.classList.remove('unit-cell-noblock');
+        }
+        if (successMove){
+            // 移出之前标记的from  to
+            const classList = ['from', 'to', 'mark-enemy', 'mark-yourself'];
+            for (let i = 0; i < classList.length; i++){
+                document.querySelectorAll(`.${classList[i]}`).forEach((element) => {
+                    element.classList.remove(classList[i]);
                 });
             }
+            fromCell.maskElement.classList.add('from');
+            toCell.maskElement.classList.add('to');
+            if (from_enemy){
+                fromCell.maskElement.classList.add('mark-enemy');
+                toCell.maskElement.classList.add('mark-enemy');
+            }
+            else{
+                fromCell.maskElement.classList.add('mark-yourself');
+                toCell.maskElement.classList.add('mark-yourself');
+            }
+
+            cell.setUnit(unitClick);
+            
+            // 更新右下角信息
+            Scene.instances[0].battlefield.updateRightBottomElement();
         }
     }
+    
 });
 
 function buildSocket() {
@@ -384,16 +352,17 @@ function makeNewMove(socket, unit, cell) {
     let data = {from:{ x: unit.parentCell.x, y: unit.parentCell.y},
     to: {x: cell.x, y:cell.y}}
     const message = JSON.stringify({ type, data });
+
     socket.send(message);
     checkEndGame(socket);
     Scene.instances[0].gameInfo.changeTurn();
 }
 
 function checkEndGame(socket){
-    if (Scene.instances[0].gameInfo.playerCost <= 40){
+    if (Scene.instances[0].gameInfo.playerCost <= 0){
         sendMessage(socket, 'endGame', false);
     }
-    else if (Scene.instances[0].gameInfo.opponentCost <= 40){
+    else if (Scene.instances[0].gameInfo.opponentCost <= 0){
         sendMessage(socket, 'endGame', true);
     }
 }
