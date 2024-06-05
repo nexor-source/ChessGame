@@ -197,4 +197,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
             Scene.instances[0].unitFieldPlayer.UpdateCost();
         }
     }); 
+
+    
 });
+
+

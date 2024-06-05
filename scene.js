@@ -2,13 +2,14 @@ class GameInfo {
     constructor() {
         this.nowPlayerName = 'You';
         this.isYourTurn = true;
-        this.remainingTime = 0;
+        this.remainingTime = 'inf';
         this.playerCost = 0;
         this.opponentCost = 0;
         this.playerCostDelta = 0;
         this.opponentCostDelta = 0;
         this.round = 0;
         this.element = document.createElement('div');
+        this.element.className = 'gameinfo'
         this.isKingDead = false;
         this.isKingDeadEnemy = false;
     }
@@ -103,9 +104,10 @@ class ScenePrepare extends Scene {
         // 添加你需要的元素
         this.unitFieldPlayer = new UnitField();
         this.unitStore = new UnitStore();
+        this.unitFieldPreview = new UnitAttackPreviewField();
         const player = new Player();
 
-
+        this.addElement(this.unitFieldPreview.render());
         this.addElement(this.unitFieldPlayer.render());
         this.addElement(this.unitStore.render());
         this.addElement(player.updateGold(10));
@@ -115,17 +117,14 @@ class ScenePrepare extends Scene {
 class SceneBattle extends Scene {
     constructor() {
         super();
-        // 添加一个用于测试的文字
-        let text = document.createElement('p');
-        text.textContent = '这是战斗阶段';
 
         this.battlefield = new UnitBattleField();
         this.gameInfo = new GameInfo();
+        this.unitFieldPreview = new UnitAttackPreviewField();
 
-        
+        this.addElement(this.unitFieldPreview.render());
         this.addElement(this.battlefield.render());
         this.addElement(this.gameInfo.render());
-        this.addElement(text);
     }
 
     // 提供一个方法来获取 UnitBattleField

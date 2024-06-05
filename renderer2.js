@@ -11,6 +11,12 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 
     // 显示正在连接服务器
     alert('正在连接服务器');
+    let sceneSwitchButton = document.createElement('button');
+    sceneSwitchButton.id = 'sceneSwitchButton';
+    sceneSwitchButton.innerText = '返回';
+    sceneSwitchButton.addEventListener('click', switchScene);
+    document.body.appendChild(sceneSwitchButton);
+
     buildSocket().then(newSocket => {
         socket = newSocket;
         // 如果连接成功，则关闭正在连接服务器的窗口
@@ -23,14 +29,10 @@ window.addEventListener('DOMContentLoaded', (event) => {
         matchingText.id = 'matching-text';
         matchingText.innerHTML = '匹 配 中 <span>.</span> <span>.</span> <span>.</span>';
 
-        let sceneSwitchButton = document.createElement('button');
-        sceneSwitchButton.id = 'sceneSwitchButton';
-        sceneSwitchButton.innerText = '返回';
-        sceneSwitchButton.addEventListener('click', switchScene);
 
         // 将新的div元素添加到body中
         document.body.appendChild(matchingText);
-        document.body.appendChild(sceneSwitchButton);
+
 
         // 添加一个监听器来等待服务器发送开始游戏的信息
         socket.addEventListener('message', event => {
@@ -68,20 +70,20 @@ window.addEventListener('DOMContentLoaded', (event) => {
             }
             // 监听move type的消息，如果,data.data = { from: { x: 1, y: 4 }, to: { x: 3, y: 4 } }，按照消息的格式进行移动
             else if (data.type === 'move') {
-                let from = data.data.from;
-                let to = data.data.to;
-                // 展示from和to的坐标
-                console.log(from, to); 
+                if (data.data){
+                    let from = data.data.from;
+                    let to = data.data.to;
 
-                let unitClick = currentScene.battlefield.getCell(from.x,from.y).unit;
-                let cell = currentScene.battlefield.getCell(to.x,to.y);
-                checkMouseUp(unitClick, cell, true, data.data.range);
+                    let unitClick = currentScene.battlefield.getCell(from.x,from.y).unit;
+                    let cell = currentScene.battlefield.getCell(to.x,to.y);
+                    checkMouseUp(unitClick, cell, true, data.data.range);
+                }
                 Scene.instances[0].gameInfo.changeTurn();
             }
             else if (data.type === 'endGame') {
                 // 游戏结束
-                if (data.data) {
-                    alert('You win!');
+                if (data.data.win) {
+                    alert(data.data.mes + 'You win!');
                 } else {
                     alert('You lose!');
                 }
@@ -196,6 +198,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
                 cell.element.classList.remove('unit-cell-move');
                 cell.maskElement.classList.remove('unit-cell-noblock');
                 cell.maskElement.classList.remove('unit-cell-range');
+                cell.maskElement.classList.remove('unit-cell-first');
             });
         }
     }); 
@@ -269,7 +272,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
             // unitClick.revertPosition();
         }
         else {
-            if (cell && unitClick && Scene.instances[0].gameInfo.isYourTurn){
+            if (cell && unitClick && Scene.instances[0].gameInfo.isYourTurn && cell.parentField instanceof UnitBattleField){
                 // 如果cell上已经有unit
                 if (cell.unit){
                     // 攻击是否合法
@@ -350,25 +353,49 @@ window.addEventListener('DOMContentLoaded', (event) => {
             unitClick.revertPosition();
         }
     }
-    
+
+    document.addEventListener('mouseover', (e) => {
+        // 检查鼠标悬停的cell
+        let cellHover = null;
+        for (let i = 0; i < UnitCell.instances.length; i++) {
+            const cell = UnitCell.instances[i];
+            const rect = cell.element.getBoundingClientRect();
+            // 检查鼠标位置是否在单元格内
+            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                cellHover = cell;
+                break;
+            }
+        }
+
+        if (cellHover && cellHover.parentField instanceof UnitBattleField) {
+            Scene.instances[0].battlefield.draw(cellHover);
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        // 鼠标移出时，清空unitFieldPreview
+        if (Scene.instances[0] && Scene.instances[0].unitFieldPreview) {
+            Scene.instances[0].battlefield.cleanCanvas();
+        }
+    });
 });
 
 function buildSocket() {
     return new Promise((resolve, reject) => {
-        let socket = new WebSocket('ws://localhost:8080');
+        let socket = new WebSocket('ws://58.87.96.41:8080');
 
         socket.onopen = function(e) {
             resolve(socket);
         };
 
         socket.onerror = function(error) {
+            console.error('WebSocket error: ', JSON.stringify(error, null, 2));
             reject(error);
         };
     });
 }
 
 // 等待匹配
-
 
 function sendMessage(socket, type, data) {
     const message = JSON.stringify({ type, data });
@@ -383,19 +410,22 @@ function makeNewMove(socket, unit, cell, range = false) {
     const message = JSON.stringify({ type, data });
 
     socket.send(message);
-    checkEndGame(socket);
     Scene.instances[0].gameInfo.changeTurn();
+    checkEndGame(socket);
 }
 
 function checkEndGame(socket){
     if (Scene.instances[0].gameInfo.playerCost <= 0){
-        sendMessage(socket, 'endGame', false);
+        sendMessage(socket, 'endGame', {win: false, mes: '对方士气过低！'});
     }
     else if (Scene.instances[0].gameInfo.opponentCost <= 0){
-        sendMessage(socket, 'endGame', true);
+        sendMessage(socket, 'endGame', {win: true, mes: '对方士气过低！'});
     }
 }
 
 function surrender(socket){
-    sendMessage(socket, 'endGame', false);
+    sendMessage(socket, 'endGame', {win: false, mes: '对方投降了！'});
 }
+
+
+

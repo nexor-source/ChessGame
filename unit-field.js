@@ -210,6 +210,7 @@ class UnitContainer {
     }
 }
 
+// 玩家的棋子卡组
 class UnitField extends UnitContainer {
     constructor() {
         super();
@@ -273,6 +274,7 @@ class UnitField extends UnitContainer {
     }
 }
 
+// 战场场地
 class UnitBattleField extends UnitContainer {
     constructor() {
         super();
@@ -284,6 +286,88 @@ class UnitBattleField extends UnitContainer {
             }
             this.matrix.push(row);
         }
+
+        // 创建一个8*8的用于记录【每个格子可以被哪些格子攻击到】的矩阵
+        this.attackMatrix = [];
+        for (let i = 0; i < 8; i++) {
+            let row = [];
+            for (let j = 0; j < 8; j++) {
+                row.push([]);
+            }
+            this.attackMatrix.push(row);
+        }
+
+        // 绘制攻击线条
+        this.canvas = document.createElement('canvas');
+
+    }
+
+    clearAttackMatrix() {
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                this.attackMatrix[i][j] = [];
+            }
+        }
+    }
+
+    draw(cellHover) {
+        // 如果鼠标悬停在cell上，绘制线条
+        if (cellHover) {
+            const rect = cellHover.element.getBoundingClientRect();
+            const cellCenterX = rect.left + rect.width / 2;
+            const cellCenterY = rect.top + rect.height / 2;
+
+            // 遍历attackMatrix[cellHover.y][cellHover.x]，里面全是可以被哪些格子攻击到
+            
+            // console.log(`可以攻击到的单位数量是${this.attackMatrix[cellHover.y][cellHover.x].length}`)
+            for (let i = 0; i < this.attackMatrix[cellHover.y][cellHover.x].length; i++) {
+                const cellAtt = this.attackMatrix[cellHover.y][cellHover.x][i];
+                const rectAtt = cellAtt.element.getBoundingClientRect();
+                const cellCenterXAtt = rectAtt.left + rectAtt.width / 2;
+                const cellCenterYAtt = rectAtt.top + rectAtt.height / 2;
+
+                // console.log(`x从${cellCenterXAtt}到${cellCenterX},y从${cellCenterYAtt}到${cellCenterY}`)
+                this.drawLine(cellCenterXAtt, cellCenterYAtt, cellCenterX, cellCenterY, cellAtt.getUnit().isEnemy);
+            }
+        }
+    }
+
+    cleanCanvas() {
+        const context = this.canvas.getContext('2d');
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    drawLine(startX, startY, endX, endY, isEnemy = false) {
+        // 获取canvas的边界
+        const rect = this.canvas.getBoundingClientRect();
+    
+        // 将坐标转换为canvas的坐标
+        const canvasStartX = startX - rect.left;
+        const canvasStartY = startY - rect.top;
+        const canvasEndX = endX - rect.left;
+        const canvasEndY = endY - rect.top;
+
+        const context = this.canvas.getContext('2d');
+        if (isEnemy){
+            context.strokeStyle = 'red';
+        } else {
+            context.strokeStyle = 'blue';
+        }
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(canvasStartX, canvasStartY);
+        context.lineTo(canvasEndX, canvasEndY);
+        context.stroke();
+        context.closePath();
+    }
+
+    updateCanvasSize() {
+        // 获取父元素的宽度和高度
+        const rect = this.element.getBoundingClientRect();
+    
+        // 将canvas的宽度和高度设置为与父元素的宽度和高度相同
+        this.canvas.width = 870;
+        this.canvas.height = 870;
     }
 
     render(id = '') {
@@ -302,6 +386,8 @@ class UnitBattleField extends UnitContainer {
                 this.element.appendChild(cell.render());
             }
         }
+        this.element.appendChild(this.canvas);
+        this.updateCanvasSize();
         return this.element;
     }
 
@@ -346,36 +432,36 @@ class UnitBattleField extends UnitContainer {
             if (unitClick.parentCell && Scene.instances[0] instanceof SceneBattle) {
                 // 获取unitClick的actlogic
                 let actLogic = unitClick.actLogic;
+                const logicWords = ['move', 'attack'];
+                let blocked = false;
                 // 遍历actlogic中的所有key
                 for (let key in actLogic){
                     let [dx, dy] = key.split(',').map(Number);
                     let cell = unitClick.parentCell.parentField.getCell(unitClick.parentCell.x + dx * delta, unitClick.parentCell.y + dy * delta);
                     // 将actlogic[key]按照'+'分割
                     const logic = actLogic[key].split('+');
-                    if (cell){
-                        // move在logic中
-                        const logicWords = ['move', 'attack'];
+                    if (cell){                        
                         for (let k = 0; k < logicWords.length; k++){
                             const logicWord = logicWords[k];
+                            // 不是第一次行动则不会有first特性块的渲染
                             if (logic.includes('first') && !unitClick.firstMove){
                                 continue;
                             }
                             if (logic.includes(logicWord)){
                                 if (logic.includes('noblock')){
-                                    cell.element.classList.add(`unit-cell-${logicWord}`)
+                                    blocked = false;
                                     cell.maskElement.classList.add('unit-cell-noblock');
-                                    // 如果logicword是attack且logic有range的特性，则额外添加一个class
+                                } else {
+                                    blocked = cell.hasUnitBetween(unitClick.parentCell);
+                                }
+                                // 没有被阻挡，渲染
+                                if (!blocked){
+                                    cell.element.classList.add(`unit-cell-${logicWord}`);
                                     if (logicWord === 'attack' && logic.includes('range')){
                                         cell.maskElement.classList.add('unit-cell-range');
                                     }
-                                }
-                                else {
-                                    let blocked = cell.hasUnitBetween(unitClick.parentCell);
-                                    if (!blocked){
-                                        cell.element.classList.add(`unit-cell-${logicWord}`);
-                                        if (logicWord === 'attack' && logic.includes('range')){
-                                            cell.maskElement.classList.add('unit-cell-range');
-                                        }
+                                    if (logic.includes('first')){
+                                        cell.maskElement.classList.add('unit-cell-first');
                                     }
                                 }
                             }
@@ -390,6 +476,7 @@ class UnitBattleField extends UnitContainer {
 
     // 更新所有cell的右下角的数字
     updateRightBottomElement() {
+        this.clearAttackMatrix();
         // 初始化一个8*8的矩阵记录每个格子被攻击的次数
         let attackCount = [];
         for (let i = 0; i < 8; i++) {
@@ -400,6 +487,7 @@ class UnitBattleField extends UnitContainer {
             attackCount.push(row);
         }
         // 遍历所有unit，更新attackCount
+        const logicWords = ['attack'];
         Unit.instances.forEach(unit => {
                 if (unit.parentCell){
                     let x = unit.parentCell.x;
@@ -414,17 +502,20 @@ class UnitBattleField extends UnitContainer {
                         let cell = this.getCell(x + dx * theta, y + dy * theta);
                         const logic = actLogic[key].split('+');
                         if (cell){
-                            const logicWords = ['attack'];
                             for (let k = 0; k < logicWords.length; k++){
                                 const logicWord = logicWords[k];
+                                if (logic.includes('first') && !unit.firstMove){
+                                    continue;
+                                }
                                 if (logic.includes(logicWord)){
                                     if (logic.includes('noblock')){
                                         attackCount[cell.y][cell.x] += theta;
-                                    }
-                                    else {
+                                        this.attackMatrix[cell.y][cell.x].push(unit.parentCell);
+                                    } else {
                                         let blocked = cell.hasUnitBetween(unit.parentCell);
                                         if (!blocked){
                                             attackCount[cell.y][cell.x] += theta;
+                                            this.attackMatrix[cell.y][cell.x].push(unit.parentCell);
                                         }
                                     }
                                 }
@@ -456,6 +547,7 @@ class UnitBattleField extends UnitContainer {
     }
 }
 
+// 可以选择的所有棋子
 class UnitStore extends UnitContainer {
     constructor() {
         super();
@@ -490,10 +582,9 @@ class UnitStore extends UnitContainer {
     // 顺序按照unitid从1到6生成单位
     generateUnits() {
         let gid = 1;
-        
         for (let i = 0; i < this.rowNum; i++) {
             for (let j = 0; j < this.colNum; j++) {
-                if (gid > 15) {
+                if (gid > 19) {
                     break;
                 }
                 let unit = new Unit(gid);  // 创建一个新的 Unit
@@ -504,13 +595,11 @@ class UnitStore extends UnitContainer {
                 this.matrix[i][j].attachUnit(unit);
                 gid += 1;
             }
-            if (gid > 15) {
+            if (gid > 19) {
                 break;
             }
         }
     }
-
-
     
 
     render() {    
@@ -523,6 +612,110 @@ class UnitStore extends UnitContainer {
         return this.element;
     }
 }
+
+// 预览棋子的攻击方式
+class UnitAttackPreviewField extends UnitContainer {
+    constructor() {
+        super();
+        this.matrix = [];
+        this.rowNum = 15;
+        this.colNum = 15;
+        for (let i = 0; i < this.rowNum; i++) {
+            let row = [];
+            for (let j = 0; j < this.colNum; j++) {
+                row.push(new UnitCell(j, i, this));
+            }
+            this.matrix.push(row);
+        }
+        this.element = document.createElement('div');
+        this.element.className = 'unit-field-preview';
+        this.element.id = '';
+
+        // 添加一个文字元素
+        this.textElement = document.createElement('div');
+        this.textElement.className = 'describe-text';
+        this.constantText = "<span style='color:red'>【红色：仅能攻击】</span><br><span style='color:blue'>【蓝色：仅能移动】</span><br><span style='color:purple'>【紫色：攻击且移动】</span><br><span style='color:green'>【绿色边框：该路径不会被阻挡】</span><br><span style='color:red'>【准心：远程攻击自己不会位移】</span><br><span style='color:lightgray'>【浅色：该棋子第一次行动专属】</span><br><br>"
+        this.textElement.innerHTML = this.constantText;
+        this.element.appendChild(this.textElement);
+    }
+
+    renderAttackRangePreview(unitClick){
+        // 渲染unit_selected的攻击范围
+        if (unitClick === null) return;
+
+        // 获取unitClick的actlogic
+        let actLogic = unitClick.actLogic;
+        const logicWords = ['move', 'attack'];
+        let blocked = false;
+        // 遍历actlogic中的所有key
+        for (let key in actLogic){
+            let [dx, dy] = key.split(',').map(Number);
+            let cell = this.getCell(7 + dx, 7 + dy);
+            // 将actlogic[key]按照'+'分割
+            const logic = actLogic[key].split('+');
+            if (cell){                
+                for (let k = 0; k < logicWords.length; k++){
+                    const logicWord = logicWords[k];
+                    if (logic.includes('first') && !unitClick.firstMove){
+                        continue;
+                    }
+                    if (logic.includes(logicWord)){
+                        if (logic.includes('noblock')){
+                            blocked = false;
+                            cell.maskElement.classList.add('unit-cell-noblock');
+                        }
+                        // 没有被阻挡，渲染
+                        if (!blocked){
+                            cell.element.classList.add(`unit-cell-${logicWord}`);
+                            if (logicWord === 'attack' && logic.includes('range')){
+                                cell.maskElement.classList.add('unit-cell-range');
+                            }
+                            if (logic.includes('first')){
+                                cell.maskElement.classList.add('unit-cell-first');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 介绍文字的展示
+        this.textElement.innerHTML = this.constantText +  "<strong>" + unitClick.describeText + "</strong>";
+    }
+
+    renderCancel(){
+        // 清空所有的unit-cell-preview
+        for (let y = 0; y < this.rowNum; y++) {
+            for (let x = 0; x < this.colNum; x++) {
+                const cell = this.getCell(x, y);
+                cell.element.classList.remove('unit-cell-attack');
+                cell.element.classList.remove('unit-cell-move');
+                cell.maskElement.classList.remove('unit-cell-noblock');
+                cell.maskElement.classList.remove('unit-cell-range');
+                cell.maskElement.classList.remove('unit-cell-first');
+            }
+        }
+        // 介绍文字的取消
+        this.textElement.innerHTML = this.constantText;
+    }
+
+    render() {    
+        for (let y = 0; y < this.matrix.length; y++) {
+            for (let x = 0; x < this.matrix[0].length; x++) {
+                const cell = this.getCell(x, y);
+                cell.render();
+                cell.element.classList.add('unit-cell-preview');
+                this.element.appendChild(cell.element);
+                if (x === 7 && y === 7){
+                    cell.element.classList.add('unit-circle');
+                }
+            }
+        }
+        return this.element;
+    }
+}
+
+
 
 // // 记录玩家选择的单位
 // UnitStore.playerdeck = [];  // 定义并初始化静态属性

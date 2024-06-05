@@ -10,12 +10,15 @@
     "electronjs",
     "nodejs"
   ],
-  "author": "Mayue",
+  "author": "Nexor",
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "@electron/remote": "^2.1.2",
-    "electron": "^30.0.6",
     "ws": "^8.17.0"
+  },
+
+  "devDependencies": {
+    "electron": "^30.0.6",
+    "electron-packager": "^17.1.2"
   }
 }

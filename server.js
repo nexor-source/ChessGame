@@ -2,12 +2,13 @@ const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ port: 8080 });
 
-let waitingQueue = [];
+let waitingQueue = []; // 等待匹配队列
 let opponent = null;
-let wsMap = new Map(); // 新增一个 Map 对象来存储 WebSocket 连接和消息的对应关系
-let games = new Map();
+let wsMap = new Map(); // 记录玩家卡组数据
+let games = new Map(); // 记录玩家对局关系
 
 wss.on('connection', ws => {
+  console.log('A client has connected.');
   ws.on('message', message => {
     let data;
     try {
@@ -66,15 +67,22 @@ wss.on('connection', ws => {
         // 处理游戏结束信息
         opponent = games.get(ws);
         if (opponent) {
-          opponent.send(JSON.stringify({
-            type: 'endGame',
-            data: !data.data
-          }));
           ws.send(JSON.stringify({
             type: 'endGame',
             data: data.data
           }));
+          data.data.win = !data.data.win;
+          opponent.send(JSON.stringify({
+            type: 'endGame',
+            data: data.data
+          }));
         }
+        // 移出games中key或value为ws的项
+        games.forEach((value, key) => {
+          if (key === ws || value === ws) {
+            games.delete(key);
+          }
+        });
         break;
 
       case 'move':
@@ -102,9 +110,16 @@ wss.on('connection', ws => {
     // 当连接关闭时，从 wsMap 和 waitingQueue 中移除对应的 ws 对象
     wsMap.delete(ws);
     waitingQueue = waitingQueue.filter(queueWs => queueWs !== ws);
-    // 移出games中key或value为ws的项
+    // 寻找games中的key为ws的项，然后将对应的value也就是对手的ws进行发送endGame消息
     games.forEach((value, key) => {
-      if (key === ws || value === ws) {
+      if (key === ws) {
+        value.send(JSON.stringify({
+          type: 'endGame',
+          data: { win: true, mes: '对方掉线了！'}
+        }));
+        games.delete(key);
+      }
+      else if (value === ws){
         games.delete(key);
       }
     });

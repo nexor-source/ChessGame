@@ -6,11 +6,10 @@
     gap: 10px;
     width: 800px;  /* 根据列数调整宽度 */
     height: 200px;  /* 根据行数调整高度 */
-    position: absolute;  /* 添加这一行 */
-    bottom: 40px;  /* 添加这一行 */
-    left: 0;  /* 添加这一行 */
-    right: 120px;  /* 添加这一行 */
-    margin: auto;  /* 添加这一行 */
+    position: absolute;  
+    bottom: 80px;  
+    left: 300px;  
+    right: 120px; 
     user-select: none;
 }
 
@@ -20,26 +19,72 @@
     grid-template-rows: repeat(8, 1fr);
     gap: 10px;
     width: 800px;
-    height: 800px;  /* 修改为800px以使其成为正方形 */
+    height: 800px;  
+    position: relative;
+    top: 50px;
+    left: 350px;
+    bottom: 0;
+    right: 0;
+    user-select: none;
+}
+
+canvas {
     position: absolute;
     top: 0;
     left: 0;
-    bottom: 0;
-    right: 0;
-    margin: auto;
-    user-select: none;
+    pointer-events: none;
+    z-index: 3;
 }
 
 .unit-store {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(4, 1fr);
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    position: absolute;  /* 添加这一行 */
-    top: 50px;  /* 添加这一行 */
-    left: 100px;  /* 添加这一行 */
+    gap: 0px;
+    width: 800px;
+    height: 400px;  
+    position: absolute;  
+    top: 50px;  
+    bottom: 0;
+    left: 350px;  
+    right: 0;
+    user-select: none;
+}
+
+.unit-field-preview {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    gap: 0px;
+    width: 225px;  /* 15列，每列25px */
+    height: 225px;  /* 15行，每行25px */
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    bottom: 0;
+    right: 0;
+    user-select: none;
+}
+
+.describe-text {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    top: 300px;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    resize: none;  /* 禁止用户调整大小 */
+    user-select: none;
+}
+
+.gameinfo {
+    /*距离左边50px,距离上边400px*/
+    position: absolute;
+    top: 620px;
+    left: 50px;
     user-select: none;
 }
 
@@ -49,10 +94,6 @@
     margin-right: 100px;
 }
 
-/* #unit-field-player {
-    margin-bottom: 200px;
-    margin-left: 50px;
-} */
 
 /* unit-cell  unit-cell-filled  black-cell  white-cell  move-cell  attack-cell  range-attack-cell*/
 .unit-cell {
@@ -64,12 +105,32 @@
     user-select: none;
 }
 
+.unit-cell.unit-circle {
+    background-color: #000;
+    border-radius: 50%;
+}
+
+.unit-cell.unit-cell-preview {
+    width: 15px;
+    height: 15px;
+}
+
 .mask-base {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    height: 100%;
     top: 0;
     left: 0;
+    pointer-events: none;
+    user-select: none;
+}
+.replay-base {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
     user-select: none;
 }
 
@@ -94,22 +155,20 @@
 }
 
 
-.replay-base {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    top: 0;
-    left: 0;
-    user-select: none;
-}
+
 .replay-base.mark-enemy {
-    background-color: crimson;
-    z-index: 10;
+    border: 5px dashed crimson;
+    background-color: transparent;
+    box-sizing: border-box;
+    z-index: 1;
 }
 .replay-base.mark-yourself{
-    background-color: lightseagreen;
-    z-index: 10;
+    border: 5px dashed lightseagreen;
+    background-color: transparent;
+    box-sizing: border-box;
+    z-index: 1;
 }
+
 .replay-base.from{
     animation: blinkFrom 2s infinite;
 }
@@ -167,13 +226,16 @@
     border-color: lightgreen;
     box-sizing: border-box;
 }
-
 .mask-base.unit-cell-range {
     background-image: url('unit_pics/zx.png');
     background-position: center;  /* 让背景图片居中 */
     background-repeat: no-repeat;
-    background-size: 50%;  /* 让背景图片变小 */
-    z-index: 2;
+    background-size: 80%;  /* 让背景图片变小 */
+    z-index: 3;
+}
+.mask-base.unit-cell-first {
+    background-color: white;
+    opacity: 0.5;
 }
 
 @keyframes scale-pulse {
@@ -192,10 +254,10 @@
     border-radius: 50%;
     outline: 3px solid lightblue;
     box-sizing: border-box;
-    z-index: 1;
+    z-index: 2;
 }
 
-.unit.in-battle{
+.unit.in-battle {
     transition: top 0.5s, left 0.5s;
 }
 
@@ -227,26 +289,10 @@
     border: 4px solid black;
 }
 
-/* .unit-shape.triangle {
-    width: 0;
-    height: 0;
-    border-left: 24px solid transparent;
-    border-right: 24px solid transparent;
-    border-bottom: 45px solid red;
-}
-
-.unit-shape.square {
-    background-color: blue;
-}
-
-.unit-shape.circle {
-    border-radius: 50%;
-    background-color: green;
-} */
 
 .unit-attack, .unit-health, .unit-cost {
     position: absolute;
-    user-select: none;  /* 添加这一行 */
+    user-select: none;  
 }
 
 .unit-attack {
@@ -291,6 +337,7 @@
     bottom: 0;
     color: #007BFF;
     text-shadow: 0 0 3px #007BFF, 0 0 6px #007BFF, 0 0 12px #007BFF, 0 0 18px #007BFF;
+    user-select: none;
 }
 
 .right-bottom-red {
@@ -299,4 +346,23 @@
     bottom: 0;
     color: #FF0000;
     text-shadow: 0 0 3px #FF0000, 0 0 6px #FF0000, 0 0 12px #FF0000, 0 0 18px #FF0000;
+    user-select: none;
 }
+
+#sceneSwitchButton, #surrenderButton {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    position: fixed;  /* 设置为固定定位 */
+    bottom: 0;  /* 距离屏幕底部0px */
+    left: 0;  /* 距离屏幕左边0px */
+    user-select: none;
+}
+

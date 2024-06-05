@@ -18,12 +18,11 @@ ipcMain.on('switch-scene', (event, newScene) => {
   }
 });
 
-
-
 function createWindow(scene) {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 1200,
+    width: 1300,
+    height: 1050,
+    resizable: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

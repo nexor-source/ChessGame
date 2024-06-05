@@ -13,7 +13,8 @@ const unitStats = {
             flags['1,-1'] = 'attack';
             flags['-1,-1'] = 'attack';
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // bishop
     2: { 
@@ -29,7 +30,8 @@ const unitStats = {
                 flags[`${-i},${-i}`] = 'move+attack';
             }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // queen
     3: { 
@@ -47,10 +49,11 @@ const unitStats = {
                 flags[`0,${i}`] = 'move+attack';
                 flags[`0,${-i}`] = 'move+attack';
                 flags[`${i},0`] = 'move+attack';
-                flags[`${-i},`] = 'move+attack';
+                flags[`${-i},0`] = 'move+attack';
             }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // king
     4: { 
@@ -66,7 +69,8 @@ const unitStats = {
                 }
             }
             return flags;
-        })()
+        })(),
+        describe: "回合开始时如果没有王，则会-2士气",
     },
     // rook
     5: { 
@@ -80,10 +84,11 @@ const unitStats = {
                 flags[`0,${i}`] = 'move+attack';
                 flags[`0,${-i}`] = 'move+attack';
                 flags[`${i},0`] = 'move+attack';
-                flags[`${-i},`] = 'move+attack';
+                flags[`${-i},0`] = 'move+attack';
             }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // knight
     6: { 
@@ -91,17 +96,19 @@ const unitStats = {
         isHeavy: true,
         actLogic: (() => {
             let flags = {};
-            // 走日字
-            flags['1,2'] = 'move+attack+noblock';
-            flags['1,-2'] = 'move+attack+noblock';
-            flags['-1,2'] = 'move+attack+noblock';
-            flags['-1,-2'] = 'move+attack+noblock';
-            flags['2,1'] = 'move+attack+noblock';
-            flags['2,-1'] = 'move+attack+noblock';
-            flags['-2,1'] = 'move+attack+noblock';
-            flags['-2,-1'] = 'move+attack+noblock';
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    if (i * j === 0) continue;
+                    else {
+                        flags[`${i*2},${j}`] = 'move+attack+noblock';
+                        flags[`${i},${j*2}`] = 'move+attack+noblock';
+                    }
+                }
+            }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // 添加更多id和对应的攻击、生命值、形状
     // archer
@@ -118,7 +125,8 @@ const unitStats = {
             flags['-2,-2'] = 'move+first';
             flags['0,-2'] = 'range+attack';
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // ranger
     8: { 
@@ -126,16 +134,20 @@ const unitStats = {
         isHeavy: true,
         actLogic: (() => {
             let flags = {};
-            flags['0,1'] = 'move+attack';
-            flags['0,-1'] = 'move+attack';
-            flags['1,0'] = 'move+attack';
-            flags['-1,0'] = 'move+attack';
-            flags['-2,-2'] = 'range+attack';
-            flags['2,-2'] = 'range+attack';
-            flags['-2,2'] = 'range+attack';
-            flags['2,2'] = 'range+attack';
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    if (i * j === 0) {
+                        flags[`${i},${j}`] = 'move+attack';
+                    }
+                    else {
+                        flags[`${i*2},${j*2}`] = 'range+attack';
+                    }
+                }
+            }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // axeman
     9: { 
@@ -150,7 +162,8 @@ const unitStats = {
             flags['-1,0'] = 'attack';
             flags['1,0'] = 'attack';
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // berserker
     10: { 
@@ -175,7 +188,8 @@ const unitStats = {
             flags['-1,1'] = 'attack';
             flags['1,1'] = 'attack';
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // spearman
     11: { 
@@ -187,7 +201,8 @@ const unitStats = {
             flags['0,-1'] = 'move+attack';
             flags['0,-2'] = 'attack';
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // legionary
     12: {
@@ -203,7 +218,8 @@ const unitStats = {
                 }
             }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // swordman
     13: {
@@ -215,10 +231,11 @@ const unitStats = {
             flags['0,-1'] = 'move+attack';
             flags['1,0'] = 'attack';
             flags['-1,0'] = 'attack';
-            flags['-2,-2'] = 'move+fist';
+            flags['-2,-2'] = 'move+first';
             flags['2,-2'] = 'move+first';
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // warrior
     14: {
@@ -236,7 +253,8 @@ const unitStats = {
                 }
             }
             return flags;
-        })()
+        })(),
+        describe: "",
     },
     // dragon
     15: {
@@ -258,9 +276,104 @@ const unitStats = {
                 }
             }
             return flags;
-        })()
+        })(),
+        describe: "",
+    },
+    // demon
+    16: {
+        cost: 10,
+        isHeavy: true,
+        actLogic: (() => {
+            let flags = {};
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    if (i * j === 0){
+                        flags[`${i},${j}`] = 'move+attack';
+                        flags[`${i*2},${j*2}`] = 'move+attack';
+                        flags[`${i*3},${j*3}`] = 'move+attack';
+                        flags[`${i*4},${j*4}`] = 'move+attack';
+                    }
+                    else {
+                        flags[`${i*2},${j}`] = 'move+noblock';
+                        flags[`${i},${j*2}`] = 'move+noblock';
+                    }
+                }
+            }
+            return flags;
+        })(),
+        describe: "",
+    },
+    // drake
+    17: {
+        cost: 4,
+        isHeavy: false,
+        actLogic: (() => {
+            let flags = {};
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    if (i * j === 0){
+                        flags[`${i},${j}`] = 'move+attack';
+                        flags[`${i*2},${j*2}`] = 'attack';
+                    }
+                    else {
+                        flags[`${i*2},${j*2}`] = 'move+noblock';
+                    }
+                }
+            }
+            return flags;
+        })(),
+        describe: "",
+    },
+    // firemage
+    18: {
+        cost: 10,
+        isHeavy: true,
+        actLogic: (() => {
+            let flags = {};
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    flags[`${i},${j}`] = 'range+attack';
+                    if (i * j === 0){
+                        flags[`${i*2},${j*2}`] = 'move';
+                        flags[`${i*3},${j*3}`] = 'move+noblock';
+                    }
+                    else {
+                        flags[`${i*3},${j*2}`] = 'move+noblock';
+                        flags[`${i*2},${j*3}`] = 'move+noblock';
+                    }
+                }
+            }
+            return flags;
+        })(),
+        describe: "",
+    },
+    // ninja
+    19: {
+        cost: 13,
+        isHeavy: true,
+        actLogic: (() => {
+            let flags = {};
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    flags[`${i},${j}`] = 'move+attack';
+                    if (i * j === 0){
+                        flags[`${i*3},${j*3}`] = 'move+attack+noblock';
+                    }
+                    else {
+                        flags[`${i*2},${j*2}`] = 'move+attack+noblock';
+                    }
+                }
+            }
+            return flags;
+        })(),
+        describe: "",
     },
 };
+
 
 class Unit {
     constructor(id) {
@@ -275,6 +388,7 @@ class Unit {
         this.cost = stats.cost;
         this.actLogic = stats.actLogic;
         this.isHeavy = stats.isHeavy;
+        this.describeText = stats.describe;
 
         // 如果stats里面有promptID，就把它赋值给unit
         if (stats.promptID){
