@@ -4,7 +4,7 @@ const wss = new WebSocket.Server({ port: 8080 });
 
 let waitingQueue = []; // 等待匹配队列
 let opponent = null;
-let wsMap = new Map(); // 记录玩家卡组数据
+let wsMap = new Map(); // 记录玩家卡组 + 名字
 let games = new Map(); // 记录玩家对局关系
 
 wss.on('connection', ws => {
@@ -24,14 +24,14 @@ wss.on('connection', ws => {
     switch (data.type) {
       case 'deckData':
         // 检查 data.data 是否是一个数组
-        if (!Array.isArray(data.data)) {
-          console.error('Invalid data:', data.data);
+        if (!Array.isArray(data.data.deck)) {
+          console.error('Invalid data:', data.data.deck);
           return;
         }
 
         // 以敌方的坐标来记录玩家的卡组信息
         // 遍历data.data这个list的每一个元素，将每个元素的.pos.y -= 6
-        data.data = data.data.map(item => {
+        data.data.deck = data.data.deck.map(item => {
           item.pos.y = 7 - item.pos.y;
           item.pos.x = 7 - item.pos.x;
           return item;
@@ -53,12 +53,14 @@ wss.on('connection', ws => {
           player1.send(JSON.stringify({
             type: 'startGame',
             moveFirst: tempMoveFirst, // 随机决定先手
-            data: wsMap.get(player2) // 发送第二个玩家的卡组数据给第一个玩家
+            data: wsMap.get(player2).deck, // 发送第二个玩家的卡组数据给第一个玩家
+            enemyName: wsMap.get(player2).name,
           }));
           player2.send(JSON.stringify({
             type: 'startGame',
             moveFirst: !tempMoveFirst, // 随机决定先手
-            data: wsMap.get(player1) // 发送第一个玩家的卡组数据给第二个玩家
+            data: wsMap.get(player1).deck, // 发送第一个玩家的卡组数据给第二个玩家
+            enemyName: wsMap.get(player1).name,
           }));
         }
         break;

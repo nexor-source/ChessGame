@@ -21,12 +21,29 @@
     width: 800px;
     height: 800px;  
     position: relative;
-    top: 50px;
+    top: 0px;
     left: 350px;
     bottom: 0;
     right: 0;
     user-select: none;
 }
+
+.unit-graveyard {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+    gap: 10px;
+    width: 100px;
+    height: 100px;  
+    position: relative;
+    top: 830px;
+    left: 120px;
+    bottom: 0;
+    right: 0;
+    user-select: none;
+}
+
+
 
 canvas {
     position: absolute;
@@ -192,24 +209,6 @@ canvas {
     100% {opacity: 0.5;}
 }
 
-/* .mask-base.unit-cell-attack {
-    background-color: red !important;
-} 
-
-.mask-base.unit-cell-move {
-    background-color: blue !important;
-}
-
-.mask-base.unit-cell-attack.unit-cell-move {
-    background-color: purple !important;
-}
-
-.mask-base.unit-cell-noblock {
-    border-style: dashed;
-    border-width: 5px;
-    border-color: lightgreen;
-    box-sizing: border-box;
-} */
 
 .unit-cell.unit-cell-attack {
     background-color: red ;
@@ -236,6 +235,15 @@ canvas {
 .mask-base.unit-cell-first {
     background-color: white;
     opacity: 0.5;
+}
+.mask-base.unit-cell-graveyard{
+    background-image: url('unit_pics/graveyard.png');
+    background-position: center;  /* 让背景图片居中 */
+    background-repeat: no-repeat;
+    opacity: 0.05;
+    z-index: 3;
+    user-select: none;
+    pointer-events: none;
 }
 
 @keyframes scale-pulse {
@@ -366,3 +374,13 @@ canvas {
     user-select: none;
 }
 
+
+#playerName {
+    font-size: 20px; /* 增大字体大小 */
+    background-color: #D3D3D3; /* 改变背景色 */
+    border: 2px solid black; /* 添加边框 */
+    padding: 10px; /* 添加内边距 */
+    position: fixed; /* 设置位置为固定 */
+    left: 2px; /* 设置左边距 */
+    bottom: 60px; /* 设置底部边距 */
+}

@@ -258,16 +258,15 @@ class UnitField extends UnitContainer {
 
     // 加载棋子预设
     loadPreset() {
-        // 生成一个二维数组
-        let matrixID = [[1,1,1,1,1,1,1,1],[5,6,2,3,4,2,6,5]];
-    
+        let matrixID = [1,1,1,1,1,1,1,1, 5,6,2,3,4,2,6,5];
+        let playerDeck = JSON.parse(localStorage.getItem('playerDeck')) || matrixID;
+
         for (let i = 0; i < 2; i++) {
             for (let j = 0; j < 8; j++) {
-                let unit = new Unit(matrixID[i][j]);  // 创建一个新的 Unit
+                let unit = new Unit(playerDeck[i*8+j]);  // 创建一个新的 Unit
                 unit.render();
                 this.matrix[i][j].element.appendChild(unit.element);  // 渲染这个 Unit
                 this.matrix[i][j].setUnit(unit);
-                // 不是我明明在setUnit里面已经attachUnit过了我为什么还要在这里重新attach一次？
                 this.matrix[i][j].attachUnit(unit);
             }
         }
@@ -715,7 +714,46 @@ class UnitAttackPreviewField extends UnitContainer {
     }
 }
 
+// 添加unit墓地，在对战场景下被destory的unit会先来到这里（如果为空），如果这里已经有死亡单位了，则真销毁死亡单位，并将新的单位放在这里
+class UnitGraveyard extends UnitContainer {
+    constructor() {
+        super();
+        this.matrix = [];
+        this.rowNum = 1;
+        this.colNum = 1;
+        for (let i = 0; i < this.rowNum; i++) {
+            let row = [];
+            for (let j = 0; j < this.colNum; j++) {
+                row.push(new UnitCell(j, i, this));
+            }
+            this.matrix.push(row);
+        }
+        this.element = document.createElement('div');
+        this.element.className = 'unit-graveyard';
+        this.element.id = 'graveyard';
+    }
 
+    // 添加新单位到墓地的cell中，如果墓地的cell已满则销毁最早的单位再加入
+    addUnit(unit) {
+        let cell = this.getCell(0, 0);
+        if (cell.getUnit()) {
+            cell.getUnit().delete();
+        }
+        cell.setUnit(unit);
+    }
+
+    render() {    
+        for (let y = 0; y < this.matrix.length; y++) {
+            for (let x = 0; x < this.matrix[0].length; x++) {
+                const cell = this.getCell(x, y);
+                cell.render();
+                cell.maskElement.classList.add('unit-cell-graveyard');
+                this.element.appendChild(cell.element);
+            }
+        }    
+        return this.element;
+    }
+}
 
 // // 记录玩家选择的单位
 // UnitStore.playerdeck = [];  // 定义并初始化静态属性

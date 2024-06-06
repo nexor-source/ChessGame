@@ -14,7 +14,7 @@ const unitStats = {
             flags['-1,-1'] = 'attack';
             return flags;
         })(),
-        describe: "",
+        describe: "卒子(pawn)<br>升变：主教(bishop)",
     },
     // bishop
     2: { 
@@ -31,7 +31,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "主教(bishop)",
     },
     // queen
     3: { 
@@ -53,7 +53,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "皇后(queen)",
     },
     // king
     4: { 
@@ -70,7 +70,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "回合开始时如果没有王，则会-2士气",
+        describe: "国王(king)<br>回合开始时如果没有王，则会-2士气",
     },
     // rook
     5: { 
@@ -88,7 +88,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "车(rook)",
     },
     // knight
     6: { 
@@ -108,7 +108,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "马(knight)",
     },
     // 添加更多id和对应的攻击、生命值、形状
     // archer
@@ -126,7 +126,7 @@ const unitStats = {
             flags['0,-2'] = 'range+attack';
             return flags;
         })(),
-        describe: "",
+        describe: "弓箭兵(archer)<br>升变：精灵神射手(ranger)",
     },
     // ranger
     8: { 
@@ -147,7 +147,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "精灵神射手(ranger)",
     },
     // axeman
     9: { 
@@ -163,7 +163,7 @@ const unitStats = {
             flags['1,0'] = 'attack';
             return flags;
         })(),
-        describe: "",
+        describe: "斧兵(axeman)<br>升变：狂战士(berserker)",
     },
     // berserker
     10: { 
@@ -189,7 +189,7 @@ const unitStats = {
             flags['1,1'] = 'attack';
             return flags;
         })(),
-        describe: "",
+        describe: "狂战士(berserker)",
     },
     // spearman
     11: { 
@@ -202,7 +202,7 @@ const unitStats = {
             flags['0,-2'] = 'attack';
             return flags;
         })(),
-        describe: "",
+        describe: "矛兵(spearman)<br>升变：军团士兵(legionary)",
     },
     // legionary
     12: {
@@ -219,7 +219,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "军团士兵(legionary)",
     },
     // swordman
     13: {
@@ -235,7 +235,7 @@ const unitStats = {
             flags['2,-2'] = 'move+first';
             return flags;
         })(),
-        describe: "",
+        describe: "剑士(swordman)<br>升变：战士(warrior)",
     },
     // warrior
     14: {
@@ -254,7 +254,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "战士(warrior)",
     },
     // dragon
     15: {
@@ -277,7 +277,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "巨龙(dragon)",
     },
     // demon
     16: {
@@ -302,7 +302,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "恶魔(demon)",
     },
     // drake
     17: {
@@ -324,7 +324,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "龙崽(drake)",
     },
     // firemage
     18: {
@@ -348,7 +348,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "火法师(firemage)",
     },
     // ninja
     19: {
@@ -370,7 +370,7 @@ const unitStats = {
             }
             return flags;
         })(),
-        describe: "",
+        describe: "忍者(ninja)",
     },
 };
 
@@ -400,6 +400,7 @@ class Unit {
         this.draggable = true;
         this.parentCell = null;
         this.firstMove = true;
+        this.isDead = false;
 
         this.element = document.createElement('div');
         this.element.className = 'unit';
@@ -422,15 +423,21 @@ class Unit {
 
     // 添加一个方法用于摧毁unit
     destroy() {
+        this.draggable = false;
+        this.isDead = true;
+        // unit从cell中移出
         if (this.parentCell) {
             this.parentCell.element.classList.remove('unit-cell-filled');
             this.parentCell.setUnit(null);
-            console.log('destroyed unit', this.id);
+            // console.log('destroyed unit', this.id);
         }
-        this.element.remove();
-        const index = Unit.instances.indexOf(this);
-        if (index > -1) {
-            Unit.instances.splice(index, 1);
+
+        // unit移出，这里需要进行判断，如果是在准备场景中被删除则直接真删除，如果是在战斗场景中被删除则是调用墓地的方法
+        if (Scene.instances[0] instanceof ScenePrepare) {
+            this.delete();
+        }
+        else {
+            Scene.instances[0].graveyard.addUnit(this);
         }
         // 更新UI中的cost之和
         if (Scene.instances[0] instanceof SceneBattle && Scene.instances[0].gameInfo) {
@@ -444,6 +451,15 @@ class Unit {
                 }
             }
             Scene.instances[0].gameInfo.updateCost();
+        }
+    }
+
+    // 真正删除unit
+    delete() {
+        this.element.remove();
+        const index = Unit.instances.indexOf(this);
+        if (index > -1) {
+            Unit.instances.splice(index, 1);
         }
     }
 

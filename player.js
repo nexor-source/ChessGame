@@ -16,6 +16,7 @@ class Player {
     // 更新显示的金币数量
     renderGold() {
         this.goldElement.textContent = '💰cost:' + this.gold;
+        document.getElementById('app').appendChild(this.goldElement);
         return this.goldElement;
     }
 }

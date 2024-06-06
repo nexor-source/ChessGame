@@ -1,5 +1,7 @@
 class GameInfo {
     constructor() {
+        this.enemyName = 'Opponent'
+        this.yourName = localStorage.getItem('playerName');
         this.nowPlayerName = 'You';
         this.isYourTurn = true;
         this.remainingTime = 'inf';
@@ -25,6 +27,8 @@ class GameInfo {
 
     render() {
         this.element.id = 'info-box';
+        this.nowPlayerName = this.isYourTurn ? this.yourName : this.enemyName;
+        this.nowPlayerName = this.nowPlayerName + (this.isYourTurn ? '(You)' : '(Opponent)');
         this.element.innerHTML = `
             <p>当前回合: ${this.nowPlayerName}</p>
             <p>剩余时间: ${this.remainingTime}</p>
@@ -37,7 +41,7 @@ class GameInfo {
 
     changeTurn(changeRound = true) {
         this.isYourTurn = !this.isYourTurn;
-        this.nowPlayerName = this.isYourTurn ? 'You' : 'Opponent';
+        
         if (changeRound) this.round++;
         // 如果某人的回合开始时自己没有王，则costdelta会-2
         if (this.isYourTurn && this.isKingDead) {
@@ -59,10 +63,12 @@ class GameInfo {
         this.playerCost = 0;
         this.opponentCost = 0;
         Unit.instances.forEach(unit => {
-            if (unit.isEnemy) {
-                this.opponentCost += unit.cost;
-            } else {
-                this.playerCost += unit.cost;
+            if (!unit.isDead){
+                if (unit.isEnemy) {
+                    this.opponentCost += unit.cost;
+                } else {
+                    this.playerCost += unit.cost;
+                }
             }
         });
         // 额外改变，可能不止王一种棋子
@@ -70,6 +76,10 @@ class GameInfo {
         this.opponentCost += this.opponentCostDelta;
 
         this.render();
+    }
+
+    updateEnemyName(name) {
+        this.enemyName = name;
     }
 }
 
@@ -84,7 +94,7 @@ class Scene {
 
     render() {
         this.elements.forEach(element => {
-            document.body.appendChild(element);
+            document.getElementById('app').appendChild(element);
         });
     }
 
@@ -92,7 +102,7 @@ class Scene {
         UnitCell.instances = [];
         Unit.instances = [];
         this.elements.forEach(element => {
-            document.body.removeChild(element);
+            document.getElementById('app').removeChild(element);
         });
         this.elements = [];
     }
@@ -121,7 +131,9 @@ class SceneBattle extends Scene {
         this.battlefield = new UnitBattleField();
         this.gameInfo = new GameInfo();
         this.unitFieldPreview = new UnitAttackPreviewField();
+        this.graveyard = new UnitGraveyard();
 
+        this.addElement(this.graveyard.render());
         this.addElement(this.unitFieldPreview.render());
         this.addElement(this.battlefield.render());
         this.addElement(this.gameInfo.render());

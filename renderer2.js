@@ -15,13 +15,13 @@ window.addEventListener('DOMContentLoaded', (event) => {
     sceneSwitchButton.id = 'sceneSwitchButton';
     sceneSwitchButton.innerText = '返回';
     sceneSwitchButton.addEventListener('click', switchScene);
-    document.body.appendChild(sceneSwitchButton);
+    document.getElementById('app').appendChild(sceneSwitchButton);
 
     buildSocket().then(newSocket => {
         socket = newSocket;
         // 如果连接成功，则关闭正在连接服务器的窗口
         alert('连接成功，确认以开始匹配');
-        sendMessage(socket, 'deckData', tempPlayerDeck);
+        sendMessage(socket, 'deckData', { deck : tempPlayerDeck, name : localStorage.getItem('playerName') });
 
         // 添加一个文字，内容是匹配中...，并且这三个点点点有一定的动画效果来告诉玩家当前游戏没有卡死，是在匹配中的
         // 创建一个新的div元素来显示"匹配中..."文本
@@ -31,7 +31,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 
         // 将新的div元素添加到body中
-        document.body.appendChild(matchingText);
+        document.getElementById('app').appendChild(matchingText);
 
 
         // 添加一个监听器来等待服务器发送开始游戏的信息
@@ -39,24 +39,27 @@ window.addEventListener('DOMContentLoaded', (event) => {
             const data = JSON.parse(event.data);
             if (data.type === 'startGame') {
                 // 删除匹配文本和返回按钮
-                document.body.removeChild(matchingText);
-                document.body.removeChild(sceneSwitchButton);
+                document.getElementById('app').removeChild(matchingText);
+                document.getElementById('app').removeChild(sceneSwitchButton);
 
                 // 添加新的投降按钮
                 let surrenderButton = document.createElement('button');
                 surrenderButton.id = 'surrenderButton';
                 surrenderButton.innerText = '投降';
                 surrenderButton.addEventListener('click', () => surrender(socket));
-                document.body.appendChild(surrenderButton);
+                document.getElementById('app').appendChild(surrenderButton);
 
+                // 加载战斗场景
                 currentScene = new SceneBattle();
                 currentScene.render();
+                Scene.instances = [];
+                Scene.instances.push(currentScene);
+                
+                // 判断先手后手
                 if (!data.moveFirst){
                     currentScene.gameInfo.changeTurn(false);
                 }
 
-                Scene.instances = [];
-                Scene.instances.push(currentScene);
                 // 按照data.data中给的数据来生成所有的unit, data.data = [{id:x,pos:{x:x,y:x}},{id:x,pos:{x:x,y:x}}...]
                 data.data.forEach(unitData => {
                     spawnIDUnitAtPos(unitData.pos.x, unitData.pos.y, unitData.id, true);
@@ -65,7 +68,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
                     spawnIDUnitAtPos(unitData.pos.x, unitData.pos.y, unitData.id, false);
                 });
 
+                currentScene.gameInfo.updateEnemyName(data.enemyName);
                 currentScene.gameInfo.updateCost();
+                
                 currentScene.battlefield.updateRightBottomElement();
             }
             // 监听move type的消息，如果,data.data = { from: { x: 1, y: 4 }, to: { x: 3, y: 4 } }，按照消息的格式进行移动
@@ -124,7 +129,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
             const rect = cell.element.getBoundingClientRect();
             // 检查鼠标位置是否在单元格内
             if (startX >= rect.left && startX <= rect.right && startY >= rect.top && startY <= rect.bottom) {
-                console.log('Clicked on cell');
+                // console.log('Clicked on cell');
                 cellClick = cell;
                 break;
             }
@@ -138,7 +143,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
             // 检查鼠标位置是否在Unit内
             if (startX >= rect.left && startX <= rect.right && startY >= rect.top && startY <= rect.bottom) {
                 if (unit.draggable) {
-                    console.log('Clicked on unit');
+                    // console.log('Clicked on unit');
                     unitClick = unit;
                     break;
                 }
@@ -202,6 +207,31 @@ window.addEventListener('DOMContentLoaded', (event) => {
             });
         }
     }); 
+
+    document.addEventListener('mouseover', (e) => {
+        // 检查鼠标悬停的cell
+        let cellHover = null;
+        for (let i = 0; i < UnitCell.instances.length; i++) {
+            const cell = UnitCell.instances[i];
+            const rect = cell.element.getBoundingClientRect();
+            // 检查鼠标位置是否在单元格内
+            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                cellHover = cell;
+                break;
+            }
+        }
+
+        if (cellHover && cellHover.parentField instanceof UnitBattleField) {
+            Scene.instances[0].battlefield.draw(cellHover);
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        // 鼠标移出时，清空unitFieldPreview
+        if (Scene.instances[0] && Scene.instances[0].unitFieldPreview) {
+            Scene.instances[0].battlefield.cleanCanvas();
+        }
+    });
 
     // 在新的渲染进程中，接收卡组数据
     ipcRenderer.on('receive-deck-data', (event, data) => {
@@ -354,36 +384,13 @@ window.addEventListener('DOMContentLoaded', (event) => {
         }
     }
 
-    document.addEventListener('mouseover', (e) => {
-        // 检查鼠标悬停的cell
-        let cellHover = null;
-        for (let i = 0; i < UnitCell.instances.length; i++) {
-            const cell = UnitCell.instances[i];
-            const rect = cell.element.getBoundingClientRect();
-            // 检查鼠标位置是否在单元格内
-            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                cellHover = cell;
-                break;
-            }
-        }
-
-        if (cellHover && cellHover.parentField instanceof UnitBattleField) {
-            Scene.instances[0].battlefield.draw(cellHover);
-        }
-    });
-
-    document.addEventListener('mouseout', (e) => {
-        // 鼠标移出时，清空unitFieldPreview
-        if (Scene.instances[0] && Scene.instances[0].unitFieldPreview) {
-            Scene.instances[0].battlefield.cleanCanvas();
-        }
-    });
+    
 });
 
 function buildSocket() {
     return new Promise((resolve, reject) => {
         let socket = new WebSocket('ws://58.87.96.41:8080');
-
+        
         socket.onopen = function(e) {
             resolve(socket);
         };

@@ -2,8 +2,78 @@ const { ipcRenderer } = require('electron');
 
 window.addEventListener('DOMContentLoaded', (event) => {
     
-    // 按钮事件绑定
+
+    ipcRenderer.send('check-tutorial-finished');
+
+    ipcRenderer.on('tutorial-finished-status', (event, arg) => {
+        if (!arg) {
+            // 加载教程
+            const tutorialFolder = 'tutorial/';
+            let tutorialImages = ["1.png", "2.png", "3.png"/* ... */];
+            let currentImageIndex = 0;
+            
+            // 创建教程元素
+            let tutorialDiv = document.createElement('div');
+            tutorialDiv.id = 'tutorial';
+
+            let tutorialImage = document.createElement('img');
+            tutorialImage.id = 'tutorial-image';
+            tutorialImage.src = tutorialFolder + tutorialImages[currentImageIndex];
+
+            tutorialImage.style.userSelect = 'none';
+            tutorialImage.style.pointerEvents = 'none';
+            tutorialImage.style.zIndex = 1000;
+            tutorialImage.style.position = 'relative';
+
+            tutorialDiv.appendChild(tutorialImage);
+
+            document.getElementById('app').appendChild(tutorialDiv);
+            
+            tutorialDiv.addEventListener('click', () => {
+                // 点击后，移动到下一张图片
+                currentImageIndex++;
+        
+                // 如果还有更多的教程图片，更新图片
+                if (currentImageIndex < tutorialImages.length) {
+                tutorialImage.src = tutorialFolder + tutorialImages[currentImageIndex];
+                }
+                // 否则，隐藏教程
+                else {
+                tutorialDiv.style.display = 'none';
+                ipcRenderer.send('tutorial-finished'); // 发送教程结束消息
+                loadOtherElements();
+                }
+            });
+        }
+        else {
+            loadOtherElements();
+        }
+    });
+
+    
+});
+
+function loadOtherElements() {
+    // 匹配按钮添加
+    let matchButton = document.createElement('button');
+    matchButton.id = 'sceneSwitchButton';
+    matchButton.textContent = '匹配';
+    document.getElementById('app').appendChild(matchButton);
     document.getElementById('sceneSwitchButton').addEventListener('click', switchScene);
+
+    // 玩家名称输入处
+    let inputElement = document.createElement("input");
+    inputElement.type = "text";
+    inputElement.id = "playerName";
+    inputElement.placeholder = "输入玩家名字";
+    inputElement.maxLength = 10;
+
+    document.body.appendChild(inputElement);
+
+    // 如果localStorage中有保存的玩家名字，设置为输入框的默认值
+    if(localStorage.getItem('playerName')) {
+        inputElement.value = localStorage.getItem('playerName');
+    }
 
 
     console.log('Loaded scene1.html');
@@ -58,7 +128,11 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
         Scene.instances = [];
         // 输出Unitstore.playerdeck来检查是否正确
+        let playerName = document.getElementById('playerName').value;
         ipcRenderer.send('send-deck-data', UnitStore.playerdeck);
+        // 保存玩家名字到localStorage
+        localStorage.setItem('playerName', playerName);
+        localStorage.setItem('playerDeck', JSON.stringify(UnitStore.playerdeck));
         ipcRenderer.send('switch-scene', 'scene2.html');
     }
 
@@ -151,7 +225,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
                     }
                 }
                 // 如果拖到玩家的格子
-                if (cell.parentField instanceof UnitField){
+                else if (cell.parentField instanceof UnitField){
                     // 检查重轻子类型和cell类型是否匹配
                     if ((unitClick.isHeavy && cell.x === 0) || (!unitClick.isHeavy && cell.x === 1)){
                         unitClick.revertPosition();
@@ -182,6 +256,10 @@ window.addEventListener('DOMContentLoaded', (event) => {
                         }
                     }
                 }
+                // 拖到了不知名的地方
+                else{
+                    unitClick.revertPosition();
+                }
             }
             // 如果没有找到cell
             else{
@@ -197,8 +275,15 @@ window.addEventListener('DOMContentLoaded', (event) => {
             Scene.instances[0].unitFieldPlayer.UpdateCost();
         }
     }); 
+}
+
+
+
+
+
+
+
 
     
-});
 
 

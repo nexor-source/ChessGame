@@ -7,5 +7,13 @@ freepik
 Chanut-is-Industries
 IconMarketPK
 Freepik
+Vitaly Gorbachev
 
-禁用侧键
+禁用侧键 x
+显示上一个死亡单位 √
+自定义玩家名称+对战显示 √
+本地保存对战卡组+自动读取 
+分辨率自适应 x
+商店棋子拉到preview上回弹 √
+介绍页面 √
+添加升变提示 √
