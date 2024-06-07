@@ -15,7 +15,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
     sceneSwitchButton.id = 'sceneSwitchButton';
     sceneSwitchButton.innerText = '返回';
     sceneSwitchButton.addEventListener('click', switchScene);
-    document.getElementById('app').appendChild(sceneSwitchButton);
+    document.body.appendChild(sceneSwitchButton);
 
     buildSocket().then(newSocket => {
         socket = newSocket;
@@ -31,7 +31,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
 
         // 将新的div元素添加到body中
-        document.getElementById('app').appendChild(matchingText);
+        document.body.appendChild(matchingText);
 
 
         // 添加一个监听器来等待服务器发送开始游戏的信息
@@ -39,15 +39,15 @@ window.addEventListener('DOMContentLoaded', (event) => {
             const data = JSON.parse(event.data);
             if (data.type === 'startGame') {
                 // 删除匹配文本和返回按钮
-                document.getElementById('app').removeChild(matchingText);
-                document.getElementById('app').removeChild(sceneSwitchButton);
+                document.body.removeChild(matchingText);
+                document.body.removeChild(sceneSwitchButton);
 
                 // 添加新的投降按钮
                 let surrenderButton = document.createElement('button');
                 surrenderButton.id = 'surrenderButton';
                 surrenderButton.innerText = '投降';
                 surrenderButton.addEventListener('click', () => surrender(socket));
-                document.getElementById('app').appendChild(surrenderButton);
+                document.body.appendChild(surrenderButton);
 
                 // 加载战斗场景
                 currentScene = new SceneBattle();

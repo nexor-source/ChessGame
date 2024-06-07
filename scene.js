@@ -94,7 +94,7 @@ class Scene {
 
     render() {
         this.elements.forEach(element => {
-            document.getElementById('app').appendChild(element);
+            document.body.appendChild(element);
         });
     }
 
@@ -102,7 +102,7 @@ class Scene {
         UnitCell.instances = [];
         Unit.instances = [];
         this.elements.forEach(element => {
-            document.getElementById('app').removeChild(element);
+            document.body.removeChild(element);
         });
         this.elements = [];
     }
@@ -133,10 +133,11 @@ class SceneBattle extends Scene {
         this.unitFieldPreview = new UnitAttackPreviewField();
         this.graveyard = new UnitGraveyard();
 
-        this.addElement(this.graveyard.render());
+        
         this.addElement(this.unitFieldPreview.render());
         this.addElement(this.battlefield.render());
         this.addElement(this.gameInfo.render());
+        this.addElement(this.graveyard.render());
     }
 
     // 提供一个方法来获取 UnitBattleField

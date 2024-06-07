@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', (event) => {
 
             tutorialDiv.appendChild(tutorialImage);
 
-            document.getElementById('app').appendChild(tutorialDiv);
+            document.body.appendChild(tutorialDiv);
             
             tutorialDiv.addEventListener('click', () => {
                 // 点击后，移动到下一张图片
@@ -58,7 +58,7 @@ function loadOtherElements() {
     let matchButton = document.createElement('button');
     matchButton.id = 'sceneSwitchButton';
     matchButton.textContent = '匹配';
-    document.getElementById('app').appendChild(matchButton);
+    document.body.appendChild(matchButton);
     document.getElementById('sceneSwitchButton').addEventListener('click', switchScene);
 
     // 玩家名称输入处

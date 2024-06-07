@@ -1,4 +1,4 @@
-class UnitCell {  
+class UnitCell {
     constructor(x = 0, y = 0, parentField = null) {
         this.unit = null;
         this.x = x;
@@ -365,8 +365,8 @@ class UnitBattleField extends UnitContainer {
         const rect = this.element.getBoundingClientRect();
     
         // 将canvas的宽度和高度设置为与父元素的宽度和高度相同
-        this.canvas.width = 870;
-        this.canvas.height = 870;
+        this.canvas.width = 820;
+        this.canvas.height = 820;
     }
 
     render(id = '') {
@@ -488,7 +488,7 @@ class UnitBattleField extends UnitContainer {
         // 遍历所有unit，更新attackCount
         const logicWords = ['attack'];
         Unit.instances.forEach(unit => {
-                if (unit.parentCell){
+                if (unit.parentCell && unit.isDead === false){
                     let x = unit.parentCell.x;
                     let y = unit.parentCell.y;
                     let actLogic = unit.actLogic;
@@ -548,14 +548,16 @@ class UnitBattleField extends UnitContainer {
 
 // 可以选择的所有棋子
 class UnitStore extends UnitContainer {
+    #rowNum
+    #colNum
     constructor() {
         super();
         this.matrix = [];
-        this.rowNum = 4;
-        this.colNum = 10;
-        for (let i = 0; i < this.rowNum; i++) {
+        this.#rowNum = 4;
+        this.#colNum = 10;
+        for (let i = 0; i < this.#rowNum; i++) {
             let row = [];
-            for (let j = 0; j < this.colNum; j++) {
+            for (let j = 0; j < this.#colNum; j++) {
                 row.push(new UnitCell(0, 0, this));
             }
             this.matrix.push(row);
@@ -566,8 +568,8 @@ class UnitStore extends UnitContainer {
     }
     
     randomizeUnits() {
-        for (let i = 0; i < this.rowNum; i++) {
-            for (let j = 0; j < this.colNum; j++) {
+        for (let i = 0; i < this.#rowNum; i++) {
+            for (let j = 0; j < this.#colNum; j++) {
                 let unit = new Unit(Math.floor(Math.random() * 6) + 1);  // 创建一个新的 Unit
                 unit.render();
                 this.matrix[i][j].element.appendChild(unit.element);  // 渲染这个 Unit
@@ -581,8 +583,8 @@ class UnitStore extends UnitContainer {
     // 顺序按照unitid从1到6生成单位
     generateUnits() {
         let gid = 1;
-        for (let i = 0; i < this.rowNum; i++) {
-            for (let j = 0; j < this.colNum; j++) {
+        for (let i = 0; i < this.#rowNum; i++) {
+            for (let j = 0; j < this.#colNum; j++) {
                 if (gid > 19) {
                     break;
                 }
@@ -614,14 +616,16 @@ class UnitStore extends UnitContainer {
 
 // 预览棋子的攻击方式
 class UnitAttackPreviewField extends UnitContainer {
+    #rowNum
+    #colNum
     constructor() {
         super();
         this.matrix = [];
-        this.rowNum = 15;
-        this.colNum = 15;
-        for (let i = 0; i < this.rowNum; i++) {
+        this.#rowNum = 15;
+        this.#colNum = 15;
+        for (let i = 0; i < this.#rowNum; i++) {
             let row = [];
-            for (let j = 0; j < this.colNum; j++) {
+            for (let j = 0; j < this.#colNum; j++) {
                 row.push(new UnitCell(j, i, this));
             }
             this.matrix.push(row);
@@ -684,8 +688,8 @@ class UnitAttackPreviewField extends UnitContainer {
 
     renderCancel(){
         // 清空所有的unit-cell-preview
-        for (let y = 0; y < this.rowNum; y++) {
-            for (let x = 0; x < this.colNum; x++) {
+        for (let y = 0; y < this.#rowNum; y++) {
+            for (let x = 0; x < this.#colNum; x++) {
                 const cell = this.getCell(x, y);
                 cell.element.classList.remove('unit-cell-attack');
                 cell.element.classList.remove('unit-cell-move');
@@ -716,14 +720,16 @@ class UnitAttackPreviewField extends UnitContainer {
 
 // 添加unit墓地，在对战场景下被destory的unit会先来到这里（如果为空），如果这里已经有死亡单位了，则真销毁死亡单位，并将新的单位放在这里
 class UnitGraveyard extends UnitContainer {
+    #colNum
+    #rowNum
     constructor() {
         super();
         this.matrix = [];
-        this.rowNum = 1;
-        this.colNum = 1;
-        for (let i = 0; i < this.rowNum; i++) {
+        this.#rowNum = 1;
+        this.#colNum = 1;
+        for (let i = 0; i < this.#rowNum; i++) {
             let row = [];
-            for (let j = 0; j < this.colNum; j++) {
+            for (let j = 0; j < this.#colNum; j++) {
                 row.push(new UnitCell(j, i, this));
             }
             this.matrix.push(row);

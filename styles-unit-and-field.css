@@ -3,12 +3,11 @@
     display: grid;
     grid-template-columns: repeat(8, 1fr);  /* 修改为8列 */
     grid-template-rows: repeat(2, 1fr);  /* 修改为2行 */
-    gap: 10px;
     width: 800px;  /* 根据列数调整宽度 */
     height: 200px;  /* 根据行数调整高度 */
     position: absolute;  
-    bottom: 80px;  
-    left: 300px;  
+    bottom: 70px;  
+    left: 350px;  
     right: 120px; 
     user-select: none;
 }
@@ -17,11 +16,10 @@
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
-    gap: 10px;
     width: 800px;
     height: 800px;  
     position: relative;
-    top: 0px;
+    top: 20px;
     left: 350px;
     bottom: 0;
     right: 0;
@@ -29,21 +27,16 @@
 }
 
 .unit-graveyard {
-    display: grid;
+    /* display: grid;
     grid-template-columns: repeat(1, 1fr);
-    grid-template-rows: repeat(1, 1fr);
-    gap: 10px;
+    grid-template-rows: repeat(1, 1fr); */
     width: 100px;
     height: 100px;  
-    position: relative;
-    top: 830px;
-    left: 120px;
-    bottom: 0;
-    right: 0;
+    position: absolute;
+    left: 160px;
+    bottom: 20px;
     user-select: none;
 }
-
-
 
 canvas {
     position: absolute;
@@ -61,7 +54,7 @@ canvas {
     width: 800px;
     height: 400px;  
     position: absolute;  
-    top: 50px;  
+    top: 20px;  
     bottom: 0;
     left: 350px;  
     right: 0;
@@ -76,7 +69,7 @@ canvas {
     width: 225px;  /* 15列，每列25px */
     height: 225px;  /* 15行，每行25px */
     position: absolute;
-    top: 50px;
+    top: 20px;
     left: 50px;
     bottom: 0;
     right: 0;
@@ -89,7 +82,7 @@ canvas {
     height: 250px;
     border: 1px solid #ccc;
     font-size: 16px;
-    top: 300px;
+    top: 250px;
     left: 0;
     bottom: 0;
     right: 0;
@@ -100,7 +93,7 @@ canvas {
 .gameinfo {
     /*距离左边50px,距离上边400px*/
     position: absolute;
-    top: 620px;
+    top: 510px;
     left: 50px;
     user-select: none;
 }

@@ -1,4 +1,4 @@
-// npx electron-packager . MyApp --platform=win32 --arch=x64 --icon=1.ico --overwrite
+// npx electron-packager . ChessGame --platform=win32 --arch=x64 --icon=1.ico --overwrite
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
@@ -34,7 +34,7 @@ function createWindow(scene) {
 
   const win = new BrowserWindow({
     width: Math.round(1300 ),
-    height: Math.round(1050 ),
+    height: Math.round(880 ),
     resizable: false,
     icon: path.join(__dirname, '1.ico'),
     autoHideMenuBar: true,
@@ -56,8 +56,8 @@ function createWindow(scene) {
   //   const [newWidth, newHeight] = win.getSize();
   //   const newScale = Math.min(newWidth / 1300, newHeight / 1050);
   //   win.webContents.executeJavaScript(`
-  //     document.getElementById('app').style.transform = 'scale(${newScale})';
-  //     document.getElementById('app').style.transformOrigin = 'top left';
+  //     document.body.style.transform = 'scale(${newScale})';
+  //     document.body.style.transformOrigin = 'top left';
   //   `);
   // });
 }
